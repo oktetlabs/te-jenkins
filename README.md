@@ -14,3 +14,9 @@ Some generic TE pipelines can be found in `pipelines/` folder.
 A pipeline for copying testing logs to the location where they
 should be stored. Testing job should trigger it once tests are
 finished.
+
+### bublik-import
+This pipeline defines a job for submitting testing logs to Bublik
+web application. Testing job should trigger it once tests are
+finished and logs are copied to the location where they can be
+accessed via URL by Bublik (see publish-logs pipeline).
