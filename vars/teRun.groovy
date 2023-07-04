@@ -442,18 +442,20 @@ def get_repo_params(params, tmplParams) {
 
     def paramsList = []
 
-    paramsList.addAll(entity_params(params, "TE", "te",
+    paramsList.addAll(entity_params(params, "Test Environment", "te",
                                     tmplParams.sticky_repo_params))
-    paramsList.addAll(entity_params(params, "TS", "ts",
+    paramsList.addAll(entity_params(params, "Test Suite", "ts",
                                     tmplParams.sticky_repo_params))
 
     if (tmplParams.tsconf) {
-        paramsList.addAll(entity_params(params, "TS conf", "tsconf",
-                                        tmplParams.sticky_repo_params))
+        paramsList.addAll(entity_params(
+                              params,
+                              "Test suites shared configuration", "tsconf",
+                              tmplParams.sticky_repo_params))
     }
 
-    paramsList.addAll(entity_params(params, "TS rigs", "tsrigs",
-                                    tmplParams.sticky_repo_params))
+    paramsList.addAll(entity_params(params, "Site-specific configuration",
+                                    "tsrigs", tmplParams.sticky_repo_params))
 
     return paramsList
 }

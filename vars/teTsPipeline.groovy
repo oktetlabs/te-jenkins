@@ -161,19 +161,19 @@ def call(Closure body) {
 
                             string(name: 'ts_cfg',
                                    defaultValue: params.ts_cfg,
-                                   description: 'Name of configuration (sticky default)'),
+                                   description: 'Name of configuration to be passed as --cfg option value (sticky default)'),
 
                             string(name: 'lock',
                                    defaultValue: params.lock,
-                                   description: 'Lock to acquire (sticky default)'),
+                                   description: 'Lock to acquire to avoid concurrent execution on the same test rig/resource (sticky default)'),
 
                            string(name: 'downstream_jobs',
                                    defaultValue: params.downstream_jobs,
-                                   description: 'List of downstream jobs (sticky default)'),
+                                   description: 'List of jobs to trigger at the end of execution (comma-separated, sticky default)'),
 
                            string(name: 'update_job',
                                    defaultValue: params.update_job,
-                                   description: 'Update job (sticky default)'),
+                                   description: 'Job to get revisions to use (sticky default)'),
                         ]
 
                         paramsList.addAll(teRun.get_repo_params(
