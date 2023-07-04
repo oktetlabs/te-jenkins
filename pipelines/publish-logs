@@ -3,9 +3,9 @@
 //
 // Helper pipeline to publish Test Environment logs on dedicated storage.
 //
-// Uses node with 'ts-logs' label to run the job. It should be either
-// file storage server itself or an intermediate node used to upload
-// files to artifactory.
+// This pipeline uses a node with label set by logs_node parameter. By
+// default it is `ts-logs`. This node should be either file storage server
+// itself or an intermediate node used to upload files to artifactory.
 //
 // Required plugins:
 //  - Artifactory (if artifactory backend is used)
@@ -19,6 +19,8 @@ pipeline {
                description: 'Job to copy artifacts from')
         string(name: 'publish_to', defaultValue: '',
                description: 'Path to publish logs to')
+        string(name: 'logs_node', defaultValue: '',
+               description: 'Label of the node where logs should be stored')
         string(name: 'log_files',
                defaultValue: 'meta_data.json, raw_log_bundle.tpxz, trc-brief.html, trc-full.html.bz2, trc-stats.txt, tce_log_*, tce_log_*/**',
                description: 'Which files (filter) to publish')
@@ -39,7 +41,7 @@ pipeline {
     }
 
     agent {
-        label "ts-logs"
+        label "${params.logs_node ?: 'ts-logs'}"
     }
 
     stages {

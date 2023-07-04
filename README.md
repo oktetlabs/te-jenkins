@@ -207,8 +207,9 @@ have a lot of free disk space).
    assigned to this host should be passed to `teTsDocPipeline`
    template.
 3. A host where publish-logs pipeline is run. It is the host where
-   archive of logs of testing runs is stored. In Jenkins it
-   should have label `ts-logs`.
+   archive of logs of testing runs is stored. Label of this host
+   should be passed to `publish-logs` pipeline as `logs_node`
+   parameter. By default it will try to use `ts-logs` label.
 4. A host where bublik-import pipeline is run. It should have
    label `bublik-import` in Jenkins. From that host Bublik
    web interface should be available.
@@ -238,17 +239,19 @@ have a lot of free disk space).
 
 #### Configuring testing logs publishing
 
-If in the closure passed to `teTsPipeline` template you set `publish_logs`
-to `true`, the template will trigger `publish-logs` and `bublik-import`
-(if Bublik is configured) to publish logs once testing is finished.
-
-For this to work you need to set some variables in `ts-rigs` or in your
-Jenkins file calling the pipeline template (in the closure body or in
+The template `teTsPipeline `can trigger `publish-logs` and `bublik-import`
+(if Bublik is configured) to publish logs once testing is finished. For this
+to work you need to set some variables in pipeline context in `ts-rigs` or in
+your Jenkins file calling the pipeline template (in the closure body or in
 `preStartHook` or `preRunHook`).
 
 This is required for `publish-logs` job that copies testing logs to
 a host where testing logs are permanently stored:
 
+- `PUBLISH_LOGS_NODE` - label of the Jenkins node where logs should be
+  permanently stored. This string will be passed to `publish-logs`
+  job as its `logs_node` parameter. If this variable is not set or
+  empty, logs will not be published.
 - `TS_LOGS_SUBPATH` - path relative to `$HOME/private_html/` on the host
   where logs are stored. This is the base directory where logs should
   be saved. Subdirectories named after current date, tested configuration

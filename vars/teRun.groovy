@@ -483,6 +483,32 @@ def define_logs_paths(ctx) {
     }
 }
 
+// Check whether node with a given label is available.
+// This helps to avoid indefinite hanging of Jenkins job.
+// If label is not found, this function aborts the current
+// pipeline with error message.
+//
+// Args:
+//   label: node label to check
+def check_label(label) {
+    Boolean label_exists = false
+
+    jenkins.model.Jenkins.instance.nodes.find {
+        node ->
+
+        if (node.labelString.contains(label)) {
+            label_exists = true
+            return true
+        }
+
+        return false
+    }
+
+    if (!label_exists) {
+        error("Cannot find node with label ${label}")
+    }
+}
+
 // Publish testing logs (copy them to specified location and
 // export them to Bublik web application).
 //
@@ -498,32 +524,38 @@ def define_logs_paths(ctx) {
 // Args:
 //   ctx: pipeline context
 def publish_logs(ctx) {
-  if (!get_nodes('ts-logs').isEmpty()) {
-      build(job: 'publish-logs', wait: true,
-          parameters: [
-              [ $class: 'StringParameterValue',
-                name: 'job_to_copy_from',
-                value: env.JOB_NAME ],
-              [ $class: 'StringParameterValue',
-                name: 'publish_to',
-                value: ctx.LOGS_PATH ],
-              [ $class: 'StringParameterValue',
-                name: 'art_srv_id',
-                value: ctx.TS_ARTIFACTORY ],
-              [ $class: 'StringParameterValue',
-                name: 'art_repo_name',
-                value: ctx.TS_ARTIFACTORY_REPO ]
-          ])
+    if (ctx.PUBLISH_LOGS_NODE) {
+        check_label(ctx.PUBLISH_LOGS_NODE)
 
-      if (ctx.TS_BUBLIK_URL && ctx.HTML_LOGS) {
-          build(job: 'bublik-import', wait: true,
-              parameters: [
-                  [ $class: 'StringParameterValue',
-                    name: 'bublik_url',
-                    value: ctx.TS_BUBLIK_URL ],
-                  [ $class: 'StringParameterValue',
-                    name: 'logs_url', value: ctx.HTML_LOGS ]
-              ])
-      }
-  }
+        build(job: 'publish-logs', wait: true,
+            parameters: [
+                [ $class: 'StringParameterValue',
+                  name: 'job_to_copy_from',
+                  value: env.JOB_NAME ],
+                [ $class: 'StringParameterValue',
+                  name: 'publish_to',
+                  value: ctx.LOGS_PATH ],
+                [ $class: 'StringParameterValue',
+                  name: 'logs_node',
+                  value: ctx.PUBLISH_LOGS_NODE ],
+                [ $class: 'StringParameterValue',
+                  name: 'art_srv_id',
+                  value: ctx.TS_ARTIFACTORY ],
+                [ $class: 'StringParameterValue',
+                  name: 'art_repo_name',
+                  value: ctx.TS_ARTIFACTORY_REPO ]
+            ])
+
+        if (ctx.TS_BUBLIK_URL && ctx.HTML_LOGS) {
+            check_label('bublik-import')
+            build(job: 'bublik-import', wait: true,
+                parameters: [
+                    [ $class: 'StringParameterValue',
+                      name: 'bublik_url',
+                      value: ctx.TS_BUBLIK_URL ],
+                    [ $class: 'StringParameterValue',
+                      name: 'logs_url', value: ctx.HTML_LOGS ]
+                ])
+        }
+    }
 }

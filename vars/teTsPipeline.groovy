@@ -79,9 +79,6 @@
 //   sticky_repo_params: if true, sticky [te|ts|tsconf|tsrigs]_branch
 //                       parameters are added and *_repo parameters
 //                       become sticky too.
-//   publish_logs: if true, in post/always section trigger publish-log
-//                 job to copy logs to a specified location and bublik-import
-//                 job to export logs to Bublik web application.
 //
 // Available pipeline hooks (see "Pipeline does" for understanding when hook
 // is called):
@@ -387,7 +384,7 @@ def call(Closure body) {
                         // Ignore error
                     }
 
-                    if (ctx.publish_logs && ctx.LOGS_PATH) {
+                    if (ctx.PUBLISH_LOGS_NODE && ctx.LOGS_PATH) {
                         teRun.publish_logs(ctx)
 
                         if (env.HTML_LOGS) {
