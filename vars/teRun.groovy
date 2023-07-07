@@ -559,3 +559,18 @@ def publish_logs(ctx) {
         }
     }
 }
+
+// Execute closure under a lock.
+//
+// Args:
+//   ctx: pipeline context
+//   body: closure to execute
+def cfg_lock(ctx, Closure body) {
+    if (ctx.params.lock) {
+        lock(ctx.params.lock, body)
+    } else if (ctx.cfgLockHook) {
+        ctx.cfgLockHook(ctx, body)
+    } else {
+        lock(ctx.params.ts_cfg, body)
+    }
+}

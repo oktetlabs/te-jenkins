@@ -102,6 +102,15 @@
 //                   Optional parameter.
 //   postCleanupHook: Closure is called at the end of post stage. Usefull for E-mail etc.
 //                   Optional parameter.
+//   cfgLockHook: If defined, this hook is used to lock testing
+//                configuration instead of lock() step when tests are built
+//                and run. This hook should expect two parameters - pipeline
+//                context and closure to execute under lock. It may be
+//                defined in ts-rigs if it should handle site-specific
+//                issues (set cfgLockHook field of pipeline context
+//                to a closure to do it).
+//                The hook is used only when lock pipeline parameter is
+//                empty.
 //
 // See "Pipeline templates" in jenkins/README.md for more information on
 // how to use this template.
@@ -281,8 +290,8 @@ def call(Closure body) {
 
             stage('Run') {
                 steps {
-                    lock(params.lock ?: params.ts_cfg) {
-                        script {
+                    script {
+                        teRun.cfg_lock ctx, {
 
                             // Bublik needs PROJECT to be present in metadata
                             // for sanity check. Do it here because
