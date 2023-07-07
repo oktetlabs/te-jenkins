@@ -189,6 +189,7 @@ TSRIGS_GIT_URL = https://__USER__@git.oktetlabs.ru/git/oktetlabs/ts-rigs.git
 - Email Extension
 - Copy Artifact
 - JUnit
+- Lockable Resources
 
 ### Configuring nodes and agents in Jenkins
 

@@ -10,6 +10,7 @@
 //   - Email Extension
 //   - Copy Artifact
 //   - JUnit
+//   - Lockable Resources
 //
 // Pipeline does:
 //   1. Call preStartHook if needed (see "Available pipeline hooks")
