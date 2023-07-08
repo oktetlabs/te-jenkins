@@ -7,6 +7,7 @@
 // Required plugins:
 //   - Pipeline: Stage Step
 //   - Timestamper
+//   - Parameterized Scheduler
 //
 // Pipeline is expected to have the following mandatory parameters:
 //   job: which Jenkins job this pipeline should trigger
