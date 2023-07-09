@@ -93,6 +93,53 @@ def get_rev(ctx, component) {
     return rev
 }
 
+// Generic function for checking out a repository. It saves
+// repository URL and revision in ctx.all_revs (so that it
+// will be stored in artifacts), and also sets [component]_SRC
+// variable in context (pointing to the directory with obtained
+// sources) and *_REV variable in metas.
+//
+// Args:
+//   ctx: pipeline context
+//   component: component name (used as a prefix (capitalized)
+//              for variables and as a key in ctx.all_revs map)
+//   url: source URL (if null, get_url() determines URL)
+//   revision: branch, tag or SHA-1 (if null, get_rev()
+//             determines revision)
+//   target: target directory (if null, will be set to
+//           the value of component argument)
+//
+// Return:
+//   List of checkout details as per GitSCM module.
+def generic_checkout(ctx, String component, String url = null,
+                     String revision = null, String target = null) {
+
+    def scm_vars
+    String rev = revision ?: get_rev(ctx, component)
+    String repo = url ?: get_url(ctx, component)
+    String var_prefix
+
+    if (!repo) {
+        error "Repository URL is not defined for ${component}"
+    }
+
+    var_prefix = "${component}_".toUpperCase()
+
+    dir (target ?: component) {
+        scm_vars = git_checkout(repo, rev)
+
+        ctx["${var_prefix}SRC"] = pwd()
+        ctx.metas["${var_prefix}REV"] = git_get_rev()
+    }
+
+    teRevData.store_value(ctx.all_revs, component,
+                          "${var_prefix}URL", repo)
+    teRevData.store_value(ctx.all_revs, component,
+                          "${var_prefix}REV", ctx.metas["${var_prefix}REV"])
+
+    return scm_vars
+}
+
 // Checkout TE
 //
 // Args:
@@ -105,26 +152,14 @@ def get_rev(ctx, component) {
 //   List of checkout details as per GitSCM module.
 def te_checkout(ctx, String revision = null,
                 String target = 'te') {
-    def scm_vars
-    def url = get_url(ctx, "te")
-    def rev = revision ?: get_rev(ctx, "te")
+    def result
 
-    if (!url) {
-        error "TE repository URL is not defined"
-    }
+    result = generic_checkout(ctx, 'te', null, revision, target)
 
-    dir(target) {
-        scm_vars = git_checkout(url, rev)
+    // TE_BASE is required for TE build.
+    env.TE_BASE = ctx.TE_SRC
 
-        // TE_BASE is required for TE build.
-        env.TE_BASE = pwd()
-        ctx.metas.TE_REV = git_get_rev()
-    }
-
-    teRevData.store_value(ctx.all_revs, "te", "TE_GIT_URL", url)
-    teRevData.store_value(ctx.all_revs, "te", "TE_REV", ctx.metas.TE_REV)
-
-    return scm_vars
+    return result
 }
 
 // Checkout Test Suite.
@@ -139,25 +174,7 @@ def te_checkout(ctx, String revision = null,
 //   List of checkout details as per GitSCM module.
 def ts_checkout(ctx, String url = null,
                 String revision = null) {
-    def scm_vars
-    String rev = revision ?: get_rev(ctx, "ts")
-    String repo = url ?: get_url(ctx, "ts")
-
-    if (!repo) {
-        error "Test Suite repository URL is not defined"
-    }
-
-    dir(ctx.ts_name) {
-        scm_vars = git_checkout(repo, rev)
-
-        ctx.TS_SRC = pwd()
-        ctx.metas.TS_REV = git_get_rev()
-    }
-
-    teRevData.store_value(ctx.all_revs, "ts", "TS_GIT_URL", repo)
-    teRevData.store_value(ctx.all_revs, "ts", "TS_REV", ctx.metas.TS_REV)
-
-    return scm_vars
+    return generic_checkout(ctx, 'ts', url, revision, ctx.ts_name)
 }
 
 // Checkout TS Conf.
@@ -169,25 +186,8 @@ def ts_checkout(ctx, String url = null,
 //   target: target directory
 def tsconf_checkout(ctx, String revision = null,
                     String target = 'ts-conf') {
-    def scm_vars
-    def url = get_url(ctx, "tsconf")
-    def rev = revision ?: get_rev(ctx, "tsconf")
 
-    if (!url) {
-        error "ts-conf repository URL is not defined"
-    }
-
-    dir(target) {
-        scm_vars = git_checkout(url, rev)
-
-        ctx.metas.TSCONF_REV = git_get_rev()
-    }
-
-    teRevData.store_value(ctx.all_revs, "tsconf", "TSCONF_GIT_URL", url)
-    teRevData.store_value(ctx.all_revs, "tsconf", "TSCONF_REV",
-                          ctx.metas.TSCONF_REV)
-
-    return scm_vars
+    return generic_checkout(ctx, 'tsconf', null, revision, target)
 }
 
 // Checkout TS rigs.
@@ -199,26 +199,7 @@ def tsconf_checkout(ctx, String revision = null,
 //   target: target directory
 def tsrigs_checkout(ctx, String revision = null,
                     String target = 'ts-rigs') {
-    def scm_vars
-    def url = get_url(ctx, "tsrigs")
-    def rev = revision ?: get_rev(ctx, "tsrigs")
-
-    if (!url) {
-        error "ts-rigs repository URL is not defined"
-    }
-
-    dir(target) {
-        scm_vars = git_checkout(url, rev)
-
-        ctx.TSRIGS_DIR = pwd()
-        ctx.metas.TSRIGS_REV = git_get_rev()
-    }
-
-    teRevData.store_value(ctx.all_revs, "tsrigs", "TSRIGS_GIT_URL", url)
-    teRevData.store_value(ctx.all_revs, "tsrigs", "TSRIGS_REV",
-                          ctx.metas.TSRIGS_REV)
-
-    return scm_vars
+    return generic_checkout(ctx, 'tsrigs', null, revision, target)
 }
 
 // Load site-specific Jenkins configuration from TS Rigs.
@@ -231,7 +212,7 @@ def tsrigs_load(ctx) {
     def common_env
 
     // Export common environment variables
-    common_env_path = "${ctx.TSRIGS_DIR}/jenkins/"
+    common_env_path = "${ctx.TSRIGS_SRC}/jenkins/"
     common_env_path += "common.groovy"
 
     if (fileExists(common_env_path)) {
@@ -240,7 +221,7 @@ def tsrigs_load(ctx) {
     }
 
     // Getting TS-specific variables
-    tsdefs_path = "${ctx.TSRIGS_DIR}/jenkins/defs/"
+    tsdefs_path = "${ctx.TSRIGS_SRC}/jenkins/defs/"
     tsdefs_path += "${ctx.ts_name}/defs.groovy"
 
     if (fileExists(tsdefs_path)) {
