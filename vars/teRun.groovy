@@ -15,6 +15,7 @@
 def get_url(ctx, component) {
     def url
     def var_name
+    def source
 
     // For example, if component = 'te', we try the
     // following sources (stopping once we found
@@ -25,9 +26,20 @@ def get_url(ctx, component) {
     // TE_GIT_URL in environment
 
     var_name = "${component}_GIT_URL".toUpperCase()
-    url = params["${component}_repo"] ?:
-          ctx[var_name] ?: env[var_name]
+
+    if ((url = params["${component}_repo"])) {
+        source = "pipeline parameter ${component}_repo"
+    } else if ((url = ctx[var_name])) {
+        source = "context variable ${var_name}"
+    } else if ((url = env[var_name])) {
+        source = "environment variable ${var_name}"
+    } else {
+        return null
+    }
+
     url = url.replaceAll(/__USER__/, "${env.USER}")
+    println "Repository URL for '${component}' is obtained " +
+            "from ${source}: ${url}"
 
     return url
 }
@@ -43,7 +55,8 @@ def get_url(ctx, component) {
 //   Revision
 def get_rev(ctx, component) {
     def rev
-    def var_name
+    def var_pref
+    def source
 
     // For example, if component = 'te', we try the
     // following sources (stopping once we found
@@ -53,12 +66,30 @@ def get_rev(ctx, component) {
     // TE_REV in context
     // TE_REV in environment
     // params.te_branch
+    // TE_DEF_BRANCH in context
 
-    var_name = "${component}_rev".toUpperCase()
-    rev = params["${component}_rev"] ?:
-          ctx[var_name] ?: env[var_name] ?:
-          params["${component}_branch"] ?: 'main'
+    var_pref = "${component}".toUpperCase()
 
+    if ((rev = params["${component}_rev"])) {
+        source = "pipeline parameter ${component}_rev"
+    } else if ((rev = ctx["${var_pref}_REV"])) {
+        source = "context variable ${var_pref}_REV"
+    } else if ((rev = env["${var_pref}_REV"])) {
+        source = "environment variable ${var_pref}_REV"
+    } else if ((rev = params["${component}_branch"])) {
+        source = "pipeline parameter ${component}_branch"
+    } else if ((rev = ctx["${var_pref}_DEF_BRANCH"])) {
+        source = "context variable ${var_pref}_DEF_BRANCH"
+    } else {
+        // Jenkins assumes 'master' by default but 'main' is
+        // encountered more often. Jenkins cannot detect
+        // default branch.
+        println "Choosing 'main' branch by default for ${component}"
+        return 'main'
+    }
+
+    println "Revision for '${component}' is obtained " +
+            "from ${source}: ${rev}"
     return rev
 }
 

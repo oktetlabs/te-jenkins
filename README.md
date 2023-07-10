@@ -179,6 +179,21 @@ this library:
 TSRIGS_GIT_URL = https://__USER__@git.oktetlabs.ru/git/oktetlabs/ts-rigs.git
 ```
 
+Specific revisions or branches may be set via pipeline parameters, or by
+setting `*_REV` variables in environment or pipeline context, for example
+```
+TS_REV = 'some/user/branch'
+```
+
+Note that unless exact revision or branch is specified, it is assumed
+that `main` branch should be cloned by git (Jenkins cannot detect
+default branch automatically) and checkout will fail if there is no
+such branch. You may change default branch by setting `*_DEF_BRANCH`
+variable in context, for example, for test suite:
+```
+TS_DEF_BRANCH = 'develop'
+```
+
 ## How to configure Jenkins for your test suite
 
 ### Required Jenkins plugins
