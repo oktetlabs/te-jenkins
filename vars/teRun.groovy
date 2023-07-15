@@ -129,13 +129,21 @@ def generic_checkout(ctx, String component, String url = null,
         scm_vars = git_checkout(repo, rev)
 
         ctx["${var_prefix}SRC"] = pwd()
-        ctx.metas["${var_prefix}REV"] = git_get_rev()
+        ctx.metas["${var_prefix}REV"] = scm_vars.GIT_COMMIT
     }
 
     teRevData.store_value(ctx.all_revs, component,
-                          "${var_prefix}URL", repo)
+                          "${var_prefix}GIT_URL", repo)
     teRevData.store_value(ctx.all_revs, component,
-                          "${var_prefix}REV", ctx.metas["${var_prefix}REV"])
+                          "${var_prefix}REV", scm_vars.GIT_COMMIT)
+
+    // 'detached' means that repository was checked out to a specific
+    // changeset, not a branch. Hopefully nobody calls a real
+    // branch 'detached'.
+    if (scm_vars.GIT_BRANCH != 'detached') {
+        teRevData.store_value(ctx.all_revs, component,
+                              "${var_prefix}BRANCH", scm_vars.GIT_BRANCH)
+    }
 
     return scm_vars
 }
