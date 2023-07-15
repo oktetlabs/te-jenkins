@@ -1,0 +1,123 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2022-2023 OKTET Labs Ltd. All rights reserved.
+//
+// Pipeline for building DPDK (to check whether a given revision
+// of a given repository is buildable).
+//
+// Pipeline is run on a node with label 'main'. It searches for
+// all nodes having label specified in 'label' parameter (by
+// default - 'build-dpdk') and builds DPDK on all of them.
+
+library('teLib') _
+
+def ctx = teCommon.create_pipeline_ctx(env, params)
+
+// Send email about build status.
+// It is assumed that TE_EMAIL_TO_DPDK in environment
+// contains destination address(es).
+//
+// Args:
+//   ctx: pipeline context
+//   status: (true or false, meaning success or failure)
+//   trailer: optional trailer for email subject
+def post_email(ctx, Boolean status, String trailer = null) {
+    teEmail.email_add_to_by_ids(ctx, "DPDK")
+    teEmail.email_set_prefix(ctx, "[CI DPDK] ${ctx.job_last_name}")
+
+    if (trailer) {
+        teEmail.email_set_trailer(ctx, trailer)
+    }
+
+    teEmail.email_start()
+    teEmail.email_post(ctx, status, null)
+}
+
+pipeline {
+    parameters {
+        string name: 'label', trim: true,
+               description: 'Nodes to build on',
+               defaultValue: 'build-dpdk'
+        string name: 'dpdk_repo', trim: true,
+               description: 'Git repository URL (sticky default)',
+               defaultValue: "${params.dpdk_repo}"
+        string name: 'dpdk_branch', trim: true,
+               description: 'Git branch (sticky default)',
+               defaultValue: "${params.dpdk_branch}"
+        string name: 'dpdk_rev', trim: true,
+               description: 'Revision to build',
+               defaultValue: ''
+    }
+
+    options {
+        buildDiscarder(logRotator(daysToKeepStr:'15', numToKeepStr:'20',
+                                  artifactNumToKeepStr: '100'))
+        disableConcurrentBuilds()
+        timestamps()
+        checkoutToSubdirectory('te-jenkins')
+        copyArtifactPermission('*')
+    }
+
+    triggers {
+        pollSCM('H * * * *')
+    }
+
+    agent {
+        label "main"
+    }
+
+    stages {
+
+        stage("Snapshot") {
+            steps {
+                script {
+                    ctx.job_last_name = env.JOB_NAME.replaceAll(/^.*\//, '')
+                    teDPDK.detect_url_branch(ctx, ctx.job_last_name)
+                    teDPDK.checkout(ctx: ctx)
+                }
+            }
+        }
+
+        stage("Build") {
+            steps {
+                script {
+                    def builders = [:]
+                    def nodes = teCommon.getNodes(params.label)
+
+                    for (build_node in nodes) {
+                        builders[build_node] = {
+                            node(build_node) {
+                                dir('te-jenkins') {
+                                    checkout scm
+                                }
+
+                                teDPDK.checkout(ctx: ctx, do_poll: false)
+                                teDPDK.build()
+                            }
+                        }
+                    }
+                    parallel builders
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                ctx.revdata_archive()
+            }
+        }
+
+        unsuccessful {
+            script {
+                post_email(ctx, false, 'unsuccessful')
+            }
+        }
+
+        fixed {
+            script {
+                post_email(ctx, true, 'fixed')
+            }
+        }
+    }
+}

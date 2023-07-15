@@ -21,6 +21,7 @@ def create_pipeline_ctx(env, params) {
     dlg.teEmail = teEmail
     dlg.teMeta = teMeta
     dlg.teRevData = teRevData
+    dlg.teDPDK = teDPDK
     dlg.teCommon = teCommon
 
     dlg.env = env
@@ -35,4 +36,23 @@ def create_pipeline_ctx(env, params) {
     teRevData.init_ctx(dlg)
 
     return dlg
+}
+
+// Get all nodes having specific label.
+//
+// Args:
+//   label: label to look for
+//
+// Return: list of node names
+@NonCPS
+def getNodes(String label) {
+    def nodes = jenkins.model.Jenkins.instance.nodes
+
+    def filteredNodes = nodes.findAll { node ->
+        node.labelString.contains("${label}")
+    }
+
+    return filteredNodes.collect { node ->
+        node.name
+    }
 }

@@ -21,6 +21,10 @@ web application. Testing job should trigger it once tests are
 finished and logs are copied to the location where they can be
 accessed via URL by Bublik (see publish-logs pipeline).
 
+### dpdk
+A pipeline for building DPDK. Saves repository URL, branch and
+revision in an artifact.
+
 ## Shared Jenkins library
 
 The library defined in `./vars/` contains common Jenkins/Groovy code
