@@ -108,11 +108,14 @@ def get_rev(ctx, component) {
 //             determines revision)
 //   target: target directory (if null, will be set to
 //           the value of component argument)
+//   do_poll: if true, this checkout should be taken into account by
+//            pollSCM() trigger
 //
 // Return:
 //   List of checkout details as per GitSCM module.
 def generic_checkout(ctx, String component, String url = null,
-                     String revision = null, String target = null) {
+                     String revision = null, String target = null,
+                     Boolean do_poll = true) {
 
     def scm_vars
     String rev = revision ?: get_rev(ctx, component)
@@ -126,7 +129,7 @@ def generic_checkout(ctx, String component, String url = null,
     var_prefix = "${component}_".toUpperCase()
 
     dir (target ?: component) {
-        scm_vars = git_checkout(repo, rev)
+        scm_vars = git_checkout(repo, rev, do_poll)
 
         ctx["${var_prefix}SRC"] = pwd()
         ctx.metas["${var_prefix}REV"] = scm_vars.GIT_COMMIT
@@ -146,6 +149,20 @@ def generic_checkout(ctx, String component, String url = null,
     }
 
     return scm_vars
+}
+
+// Version of generic_checkout() accepting map instead of list of
+// arguments. It allows to call the function like
+// generic_checkout(ctx: ctx, component: 'te')
+// which may be more convenient and human readable.
+def generic_checkout(Map args) {
+    if (!args.containsKey('do_poll')) {
+        args.do_poll = true
+    }
+
+    return generic_checkout(args.ctx, args.component, args.url,
+                            args.revision, args.target,
+                            args.do_poll)
 }
 
 // Checkout TE
@@ -366,10 +383,12 @@ def statistics() {
 // Args:
 //   url: URL for checkout
 //   revision: branch, tag or SHA-1
+//   do_poll: if true, this checkout should be taken into account by
+//            pollSCM() trigger
 //
 // Return:
 //   List of checkout details as per GitSCM module.
-def git_checkout(String url, String revision) {
+def git_checkout(String url, String revision, Boolean do_poll = true) {
     def scm_params = [
         $class: 'GitSCM',
         userRemoteConfigs: [[url: url]],
@@ -388,7 +407,7 @@ def git_checkout(String url, String revision) {
         scm_params.branches = [[name: revision]]
     }
 
-    return checkout(scm: scm_params)
+    return checkout(scm: scm_params, poll: do_poll)
 }
 
 // Get git revision in the current directory.
