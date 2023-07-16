@@ -29,7 +29,8 @@ def create_delegate(env, params) {
     dlg.teCtx = dlg
 
     dlg.metas = [:]
-    dlg.all_revs = [:]
+
+    teRevData.init_ctx(dlg)
 
     return dlg
 }

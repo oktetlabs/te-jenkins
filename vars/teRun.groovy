@@ -135,17 +135,15 @@ def generic_checkout(ctx, String component, String url = null,
         ctx.metas["${var_prefix}REV"] = scm_vars.GIT_COMMIT
     }
 
-    teRevData.store_value(ctx.all_revs, component,
-                          "${var_prefix}GIT_URL", repo)
-    teRevData.store_value(ctx.all_revs, component,
-                          "${var_prefix}REV", scm_vars.GIT_COMMIT)
+    ctx.revdata_set(component, "${var_prefix}GIT_URL", repo)
+    ctx.revdata_set(component, "${var_prefix}REV", scm_vars.GIT_COMMIT)
 
     // 'detached' means that repository was checked out to a specific
     // changeset, not a branch. Hopefully nobody calls a real
     // branch 'detached'.
     if (scm_vars.GIT_BRANCH != 'detached') {
-        teRevData.store_value(ctx.all_revs, component,
-                              "${var_prefix}BRANCH", scm_vars.GIT_BRANCH)
+        ctx.revdata_set(component, "${var_prefix}BRANCH",
+                        scm_vars.GIT_BRANCH)
     }
 
     return scm_vars
@@ -262,6 +260,12 @@ def tsrigs_load(ctx) {
             teEmail.email_add_to(ctx.TS_MAIL_TO)
         }
     }
+
+    /*
+     * Make sure tsrigs does not overwrite update job
+     * artifact.
+     */
+    ctx.revdata_export()
 }
 
 // Run Test suite with specific options.

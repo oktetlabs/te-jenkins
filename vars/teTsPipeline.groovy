@@ -243,16 +243,12 @@ def call(Closure body) {
                         ctx.metas.RUN_STATUS = "ERROR"
 
                         if (params.update_job) {
-                            ctx.all_revs =
-                                teRevData.try_load_revs_from_job(
-                                              params.update_job)
+                            ctx.revdata_try_load(params.update_job)
                         }
 
                         if (ctx.containsKey('preStartHook')) {
                             ctx.preStartHook()
                         }
-
-                        teRevData.export_values(env, ctx.all_revs, true)
                     }
                 }
             }
@@ -377,8 +373,7 @@ def call(Closure body) {
                         }
                     }
 
-                    teRevData.save_revs(ctx.all_revs)
-                    archiveArtifacts artifacts: 'all.rev'
+                    ctx.revdata_archive()
 
                     if (ctx.metas.FINISH_TIMESTAMP == null) {
                         ctx.metas.FINISH_TIMESTAMP =

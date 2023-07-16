@@ -60,17 +60,14 @@ def store_value(Map revs, String component, String name, String value) {
     revs[component][name] = value
 }
 
-// Export named values to environment.
+// Export named values to a map (or map-like object such as env).
 //
 // Args:
-//   env: Environment object
-//   revs: map with values
-//   force: if true, existing environment variables should be
-//          overwritten even if they have nonempty values
+//   dst: destination object
+//   revs: revisions data to export
 //   component: component name (if null, all components are iterated)
 //   name: value name (if null, all values will be exported)
-def export_values(env, Map revs, boolean force = false,
-                  String component = null, String name = null) {
+def export_values(dst, revs, String component = null, String name = null) {
     revs.each {
         comp_name, comp_vars ->
         if (!component || component == comp_name) {
@@ -78,12 +75,7 @@ def export_values(env, Map revs, boolean force = false,
                 var_name, var_value ->
 
                 if (!name || name == var_name) {
-                    if (force) {
-                        env[var_name] = var_value
-                    } else {
-                        env[var_name] = env[var_name] ?:
-                                        var_value
-                    }
+                    dst[var_name] = var_value
                 }
             }
         }
@@ -112,4 +104,44 @@ def iterate_values(Map revs, Closure it) {
 //   fpath: file path
 def save_revs(Map revs, String fpath = "all.rev") {
     writeJSON(file: fpath, json: revs, pretty: 4)
+}
+
+// Add revisions data storage and a few methods to pipeline context
+// to simplify usage of this library.
+//
+// Args:
+//   ctx: pipeline context
+def init_ctx(ctx) {
+    // Revisions data storage.
+    ctx.all_revs = [:]
+
+    // Set named value for a specific component.
+    ctx.revdata_set = { component, name, value ->
+        store_value(ctx.all_revs, component, name, value)
+    }
+
+    // Archive revisions data in an artifact.
+    ctx.revdata_archive = { String fname ->
+        fname = fname ?: 'all.rev'
+        save_revs(ctx.all_revs, fname)
+        archiveArtifacts artifacts: fname
+    }
+
+    // Try to get revisions data from artifacts of some job.
+    ctx.revdata_try_load = { String job, String fname ->
+        def loaded_revs = try_load_revs_from_job(job ?: 'update',
+                                                 fname ?: 'all.rev')
+
+        iterate_values loaded_revs, { comp_name, var_name, var_value ->
+            ctx.revdata_set(comp_name, var_name, var_value)
+            ctx[var_name] = var_value
+        }
+    }
+
+    // Export values from revisions storage to context
+    // (after that they can be taken into account by
+    // checkout functions in teRun).
+    ctx.revdata_export = {
+        export_values(ctx, ctx.all_revs)
+    }
 }
