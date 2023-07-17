@@ -69,7 +69,7 @@
 
 def call(Closure body) {
     // evaluate the body block, and collect configuration into the object
-    def ctx = teCommon.create_delegate(env, params)
+    def ctx = teCommon.create_pipeline_ctx(env, params)
     String doc_status = 'OK'
     Boolean build_status = true
 

@@ -3,12 +3,14 @@
 //
 // Generic helper functions.
 
-// Create delegate map for a closure which is passed to pipeline
-// templates.
+// Create TE pipeline context. It is used as a delegate map
+// for a closure which is passed to pipeline templates,
+// and is also passed to various functions of this
+// library.
 //
 // Return:
-//   Map to use as a delegate
-def create_delegate(env, params) {
+//   Map to use as a pipeline context
+def create_pipeline_ctx(env, params) {
     def dlg = [:]
 
     // Using DELEGATE_FIRST makes parts of this library not

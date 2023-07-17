@@ -118,7 +118,7 @@
 // how to use this template.
 
 def call(Closure body) {
-    def ctx = teCommon.create_delegate(env, params)
+    def ctx = teCommon.create_pipeline_ctx(env, params)
     def emailRecipientProviders = []
 
     // DELEGATE_FIRST means that the delegate is used firstly

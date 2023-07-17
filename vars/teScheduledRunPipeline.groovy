@@ -49,7 +49,7 @@
 
 def call(Closure body) {
     def job_params = []
-    def ctx = teCommon.create_delegate(env, params)
+    def ctx = teCommon.create_pipeline_ctx(env, params)
 
     def get_job_param = {
         pname, pvalue ->
