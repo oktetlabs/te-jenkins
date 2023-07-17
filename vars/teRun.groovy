@@ -253,11 +253,11 @@ def tsrigs_load(ctx) {
         tsdefs.set_defs(ctx)
 
         if (ctx.TS_MAIL_FROM) {
-            teEmail.email_set_from(ctx.TS_MAIL_FROM)
+            teEmail.email_set_from(ctx, ctx.TS_MAIL_FROM)
         }
 
         if (ctx.TS_MAIL_TO) {
-            teEmail.email_add_to(ctx.TS_MAIL_TO)
+            teEmail.email_add_to(ctx, ctx.TS_MAIL_TO)
         }
     }
 

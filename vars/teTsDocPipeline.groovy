@@ -214,7 +214,7 @@ def call(Closure body) {
             fixed {
                 script {
                     doc_status = 'fixed'
-                    teEmail.email_set_trailer('fixed')
+                    teEmail.email_set_trailer(ctx, 'fixed')
                 }
             }
             cleanup {
@@ -222,7 +222,7 @@ def call(Closure body) {
                     if (doc_status in ctx.send_on_status) {
                         teEmail.email_start()
                         teEmail.email_all_revs(ctx.all_revs)
-                        teEmail.email_post(build_status, [])
+                        teEmail.email_post(ctx, build_status, [])
                     }
                 }
             }

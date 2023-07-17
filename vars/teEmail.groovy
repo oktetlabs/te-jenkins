@@ -6,37 +6,41 @@
 // Set email sender.
 //
 // Args:
+//   ctx: pipeline context
 //   address: email address
-def email_set_from(String address) {
-    env.EMAIL_FROM = address
+def email_set_from(ctx, String address) {
+    ctx.EMAIL_FROM = address
 }
 
 // Add email recipient.
 //
 // Args:
+//   ctx: pipeline context
 //   address: email address
-def email_add_to(String address) {
-    if (env.EMAIL_TO == null) {
-        env.EMAIL_TO = ""
+def email_add_to(ctx, String address) {
+    if (ctx.EMAIL_TO == null) {
+        ctx.EMAIL_TO = ""
     }
-    env.EMAIL_TO += "${address};"
+    ctx.EMAIL_TO += "${address};"
 }
 
 // Set prefix in email subject.
 // By default it is "[CI <jobname>]".
 //
 // Args:
+//   ctx: pipeline context
 //   prefix: prefix string
-def email_set_prefix(String prefix) {
-    env.EMAIL_PREFIX = prefix
+def email_set_prefix(ctx, String prefix) {
+    ctx.EMAIL_PREFIX = prefix
 }
 
 // Set trailer in email subject.
 //
 // Args:
+//   ctx: pipeline context
 //   trailer: trailer string
-def email_set_trailer(String trailer) {
-    env.EMAIL_TRAILER = trailer
+def email_set_trailer(ctx, String trailer) {
+    ctx.EMAIL_TRAILER = trailer
 }
 
 // Get path to a file where email message text is constructed.
@@ -118,11 +122,12 @@ def email_stage(String stage) {
 // Post email by status
 //
 // Args:
+//   ctx: pipeline context
 //   status: status of build
 //   providers: recipient providers, i.e. requestor() or culprits() etc...
-def email_post(status, providers) {
+def email_post(ctx, status, providers) {
     def email_file = email_file_get()
-    def prefix = env.EMAIL_PREFIX ?: "[CI ${env.JOB_NAME}]"
+    def prefix = ctx.EMAIL_PREFIX ?: "[CI ${env.JOB_NAME}]"
     def subject
 
     email_newline()
@@ -136,14 +141,14 @@ def email_post(status, providers) {
     subject = "${prefix} job ${currentBuild.displayName}: "
     subject += "${currentBuild.currentResult}"
 
-    if (env.EMAIL_TRAILER) {
-        subject += " ${env.EMAIL_TRAILER}"
+    if (ctx.EMAIL_TRAILER) {
+        subject += " ${ctx.EMAIL_TRAILER}"
     }
 
     emailext (
         subject: "${subject}",
-        to: env.EMAIL_TO,
-        from: env.EMAIL_FROM,
+        to: ctx.EMAIL_TO,
+        from: ctx.EMAIL_FROM,
         recipientProviders: providers,
         attachLog: true,
         attachmentsPattern: '**/trc-brief.html',

@@ -368,8 +368,9 @@ def call(Closure body) {
                         def passed = total - failed - skipped
 
                         if (total > 0) {
-                            teEmail.email_set_trailer("${passed}+${failed}+" +
-                                                    "${skipped}=${total}")
+                            teEmail.email_set_trailer(
+                                        ctx, "${passed}+${failed}+" +
+                                        "${skipped}=${total}")
                         }
                     }
 
@@ -416,7 +417,7 @@ def call(Closure body) {
             }
             success {
                 script {
-                    teEmail.email_post(true, emailRecipientProviders)
+                    teEmail.email_post(ctx, true, emailRecipientProviders)
 
                     if (params.downstream_jobs) {
                         params.downstream_jobs.tokenize(',').each {
@@ -428,7 +429,7 @@ def call(Closure body) {
             }
             unsuccessful {
                 script {
-                    teEmail.email_post(false, emailRecipientProviders)
+                    teEmail.email_post(ctx, false, emailRecipientProviders)
                     if (ctx.containsKey('postUnsuccessfulHook')) {
                         ctx.postUnsuccessfulHook()
                     }
