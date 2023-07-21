@@ -27,11 +27,11 @@ def get_url(ctx, component) {
 
     var_name = "${component}_GIT_URL".toUpperCase()
 
-    if ((url = params["${component}_repo"])) {
+    if ((url = params["${component}_repo"] ?: '')) {
         source = "pipeline parameter ${component}_repo"
     } else if ((url = ctx[var_name])) {
         source = "context variable ${var_name}"
-    } else if ((url = env[var_name])) {
+    } else if ((url = env[var_name] ?: '')) {
         source = "environment variable ${var_name}"
     } else {
         return null
@@ -70,13 +70,13 @@ def get_rev(ctx, component) {
 
     var_pref = "${component}".toUpperCase()
 
-    if ((rev = params["${component}_rev"])) {
+    if ((rev = params["${component}_rev"] ?: '')) {
         source = "pipeline parameter ${component}_rev"
     } else if ((rev = ctx["${var_pref}_REV"])) {
         source = "context variable ${var_pref}_REV"
-    } else if ((rev = env["${var_pref}_REV"])) {
+    } else if ((rev = env["${var_pref}_REV"] ?: '')) {
         source = "environment variable ${var_pref}_REV"
-    } else if ((rev = params["${component}_branch"])) {
+    } else if ((rev = params["${component}_branch"] ?: '')) {
         source = "pipeline parameter ${component}_branch"
     } else if ((rev = ctx["${var_pref}_DEF_BRANCH"])) {
         source = "context variable ${var_pref}_DEF_BRANCH"
