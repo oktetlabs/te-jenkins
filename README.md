@@ -265,6 +265,10 @@ your Jenkins file calling the pipeline template (in the closure body or in
 This is required for `publish-logs` job that copies testing logs to
 a host where testing logs are permanently stored:
 
+- `publish_logs` - logs are published only if this property is set
+  to true in pipeline context. Publishing logs may be not desirable for
+  "update" jobs which are used only to rebuild test suite without
+  running any tests.
 - `PUBLISH_LOGS_NODE` - label of the Jenkins node where logs should be
   permanently stored. This string will be passed to `publish-logs`
   job as its `logs_node` parameter. If this variable is not set or
