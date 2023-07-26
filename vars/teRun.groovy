@@ -122,6 +122,7 @@ def generic_checkout(ctx, String component, String url = null,
     String repo = url ?: get_url(ctx, component)
     String var_prefix
     String prev_rev
+    String branch
 
     if (!repo) {
         error "Repository URL is not defined for ${component}"
@@ -133,7 +134,6 @@ def generic_checkout(ctx, String component, String url = null,
         scm_vars = git_checkout(repo, rev, do_poll)
 
         ctx["${var_prefix}SRC"] = pwd()
-        ctx.metas["${var_prefix}REV"] = scm_vars.GIT_COMMIT
     }
 
     ctx.revdata_set(component, "${var_prefix}GIT_URL", repo)
@@ -154,6 +154,13 @@ def generic_checkout(ctx, String component, String url = null,
     if (scm_vars.GIT_BRANCH != 'detached') {
         ctx.revdata_set(component, "${var_prefix}BRANCH",
                         scm_vars.GIT_BRANCH)
+    }
+
+    ctx.metas["${var_prefix}GIT_URL"] = repo
+    ctx.metas["${var_prefix}REV"] = scm_vars.GIT_COMMIT
+
+    if ((branch = ctx.revdata_get(component, "${var_prefix}BRANCH"))) {
+        ctx.metas["${var_prefix}BRANCH"] = branch
     }
 
     return scm_vars
