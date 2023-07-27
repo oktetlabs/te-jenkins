@@ -60,6 +60,36 @@ def store_value(Map revs, String component, String name, String value) {
     revs[component][name] = value
 }
 
+// Get named value from a map.
+//
+// Args:
+//   revs: map
+//   component: component name (for example, "te")
+//   name: value name (for example, "TE_REV")
+def get_value(Map revs, String component, String name) {
+    if (!revs[component]) {
+        return null
+    }
+
+    return revs[component][name]
+}
+
+// Remove named value from a map.
+//
+// Args:
+//   revs: map
+//   component: component name (for example, "te")
+//   name: value name (for example, "TE_REV")
+def remove_value(Map revs, String component, String name) {
+    if (!revs[component]) {
+        return
+    }
+
+    if (revs[component].containsKey(name)) {
+        revs[component].remove(name)
+    }
+}
+
 // Export named values to a map (or map-like object such as env).
 //
 // Args:
@@ -115,9 +145,19 @@ def init_ctx(ctx) {
     // Revisions data storage.
     ctx.all_revs = [:]
 
+    // Get named value for a specific component.
+    ctx.revdata_get = { component, name ->
+        return get_value(ctx.all_revs, component, name)
+    }
+
     // Set named value for a specific component.
     ctx.revdata_set = { component, name, value ->
         store_value(ctx.all_revs, component, name, value)
+    }
+
+    // Remove named value for a specific component.
+    ctx.revdata_del = { component, name ->
+        remove_value(ctx.all_revs, component, name)
     }
 
     // Archive revisions data in an artifact.

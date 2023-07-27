@@ -121,6 +121,7 @@ def generic_checkout(ctx, String component, String url = null,
     String rev = revision ?: get_rev(ctx, component)
     String repo = url ?: get_url(ctx, component)
     String var_prefix
+    String prev_rev
 
     if (!repo) {
         error "Repository URL is not defined for ${component}"
@@ -136,7 +137,16 @@ def generic_checkout(ctx, String component, String url = null,
     }
 
     ctx.revdata_set(component, "${var_prefix}GIT_URL", repo)
+
+    prev_rev = ctx.revdata_get(component, "${var_prefix}REV")
     ctx.revdata_set(component, "${var_prefix}REV", scm_vars.GIT_COMMIT)
+
+    if (prev_rev != scm_vars.GIT_COMMIT) {
+        // Clean branch if it was inherited from artifacts of upstream
+        // job and revision was not taken from there.
+
+        ctx.revdata_del(component, "${var_prefix}BRANCH" )
+    }
 
     // 'detached' means that repository was checked out to a specific
     // changeset, not a branch. Hopefully nobody calls a real
