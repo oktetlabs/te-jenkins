@@ -336,7 +336,9 @@ def call(Closure body) {
                                 opts.add('--logger-meta-file=' +
                                          teMeta.meta_data_fpath())
                             }
-                            opts.add(params.ts_opts)
+                            if (params.ts_opts) {
+                                opts.add(params.ts_opts)
+                            }
                             if (env.HTML_LOGS) {
                                 opts.add("--trc-html-logs=${env.HTML_LOGS}html")
                             }
