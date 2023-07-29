@@ -71,7 +71,6 @@ pipeline {
             steps {
                 script {
                     ctx.job_last_name = env.JOB_NAME.replaceAll(/^.*\//, '')
-                    teDPDK.detect_url_branch(ctx, ctx.job_last_name)
                     teDPDK.checkout(ctx: ctx)
                 }
             }
