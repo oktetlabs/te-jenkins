@@ -153,7 +153,7 @@ def generic_checkout(ctx, String component, String url = null,
     // branch 'detached'.
     if (scm_vars.GIT_BRANCH != 'detached') {
         ctx.revdata_set(component, "${var_prefix}BRANCH",
-                        scm_vars.GIT_BRANCH)
+                        scm_vars.GIT_BRANCH - ~/^\/?origin\//)
     }
 
     ctx.metas["${var_prefix}GIT_URL"] = repo
