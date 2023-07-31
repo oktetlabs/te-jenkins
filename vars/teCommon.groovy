@@ -38,6 +38,27 @@ def create_pipeline_ctx(env, params) {
     return dlg
 }
 
+// Construct list of triggers from list of jobs.
+//
+// Args:
+//   jobs: comma-separated list of job names
+//
+// Return:
+//   List of triggers asking to build the current pipeline
+//   when one of the jobs in the list succeeds.
+def jobs_triggers(String jobs) {
+    def triggers = []
+
+    jobs.tokenize(',').each {
+        job_name ->
+        triggers += [
+            upstream(upstreamProjects: job_name,
+                     threshold: hudson.model.Result.SUCCESS) ]
+    }
+
+    return triggers
+}
+
 // Get all nodes having specific label.
 //
 // Args:

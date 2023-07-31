@@ -36,9 +36,12 @@
 //   tsrigs_repo: ts-rigs repository (can also be set in TSRIGS_GIT_URL
 //                environment variable in Jenkins; value of this
 //                parameter can override the environment)
-//   update_job: if set, the pipeline will try to get revisions from
-//               the last successful build of this job (sticky default).
-//               It can be used to ensure that buildable revisions are used.
+//   get_revs_from: Jobs from which to get revisions of the last
+//                  successful build (sticky default). It is assumed
+//                  that revisions were saved in an artifact in `all.rev`
+//                  file using teRevData API.
+//                  This can be used to ensure that buildable revisions are
+//                  used.
 //
 // Available parameters of pipeline template:
 //   ts_name: Test suite name.
@@ -73,6 +76,10 @@ def call(Closure body) {
     String doc_status = 'OK'
     Boolean build_status = true
 
+    // update_job is the previous name, mentioned here to
+    // avoid breaking existing pipelines.
+    def get_revs_from = params.get_revs_from ?: params.update_job
+
     ctx.send_on_status = ['fixed', 'unsuccessful']
 
     // DELEGATE_FIRST means that the delegate is used firstly
@@ -105,9 +112,9 @@ def call(Closure body) {
                                                            ctx)
 
                         paramsList +=
-                            string(name: 'update_job',
-                                   defaultValue: params.update_job,
-                                   description: 'Update job (sticky default)')
+                            string(name: 'get_revs_from',
+                                   defaultValue: get_revs_from,
+                                   description: 'Jobs providing revisions to use (sticky default; comma-separated list)')
 
                         if (ctx.containsKey('specificParameters')) {
                             paramsList += ctx['specificParameters']
@@ -129,8 +136,8 @@ def call(Closure body) {
             stage('Pre start') {
                 steps {
                     script {
-                        if (params.update_job) {
-                            ctx.revdata_try_load(params.update_job)
+                        if (get_revs_from) {
+                            ctx.revdata_try_load(get_revs_from)
                         }
 
                         if (ctx.containsKey('preStartHook')) {

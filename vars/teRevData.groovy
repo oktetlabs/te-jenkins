@@ -167,14 +167,18 @@ def init_ctx(ctx) {
         archiveArtifacts artifacts: fname
     }
 
-    // Try to get revisions data from artifacts of some job.
-    ctx.revdata_try_load = { String job, String fname ->
-        def loaded_revs = try_load_revs_from_job(job ?: 'update',
-                                                 fname ?: 'all.rev')
+    // Try to get revisions data from artifacts of some jobs.
+    ctx.revdata_try_load = { String jobs, String fname ->
+        jobs.tokenize(',').each {
+            job_name ->
 
-        iterate_values loaded_revs, { comp_name, var_name, var_value ->
-            ctx.revdata_set(comp_name, var_name, var_value)
-            ctx[var_name] = var_value
+            def loaded_revs = try_load_revs_from_job(job_name,
+                                                     fname ?: 'all.rev')
+
+            iterate_values loaded_revs, { comp_name, var_name, var_value ->
+                ctx.revdata_set(comp_name, var_name, var_value)
+                ctx[var_name] = var_value
+            }
         }
     }
 

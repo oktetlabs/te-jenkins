@@ -48,8 +48,10 @@
 //   with_tce: Boolean to toggle --tce option for run.sh
 //   downstream_jobs: Comma-separated list of jobs to be triggered
 //                    in case of success (sticky default)
-//   update_job: Job from which to get revisions of the last
-//               successful build (sticky default)
+//   get_revs_from: Jobs from which to get revisions of the last
+//                  successful build (sticky default). It is assumed
+//                  that revisions were saved in an artifact in `all.rev`
+//                  file using teRevData API.
 //   ts_cfg: Tested configuration name (sticky default)
 //   lock: Lock to acquire and hold while running. Empty by default
 //         which means that ts_cfg should be used as a lock name.
@@ -120,6 +122,9 @@
 def call(Closure body) {
     def ctx = teCommon.create_pipeline_ctx(env, params)
     def emailRecipientProviders = []
+    // update_job is the previous name, mentioned here to
+    // avoid breaking existing pipelines.
+    def get_revs_from = params.get_revs_from ?: params.update_job
 
     // DELEGATE_FIRST means that the delegate is used firstly
     // to resolve properties. So that any property set in closure
@@ -180,9 +185,9 @@ def call(Closure body) {
                                    defaultValue: params.downstream_jobs,
                                    description: 'List of jobs to trigger at the end of execution (comma-separated, sticky default)'),
 
-                           string(name: 'update_job',
-                                   defaultValue: params.update_job,
-                                   description: 'Job to get revisions to use (sticky default)'),
+                           string(name: 'get_revs_from',
+                                  defaultValue: get_revs_from,
+                                  description: 'Jobs providing revisions to use (sticky default; comma-separated list)'),
                         ]
 
                         paramsList.addAll(teRun.get_repo_params(
@@ -242,8 +247,8 @@ def call(Closure body) {
                         ctx.metas.RUN_OK = "false"
                         ctx.metas.RUN_STATUS = "ERROR"
 
-                        if (params.update_job) {
-                            ctx.revdata_try_load(params.update_job)
+                        if (get_revs_from) {
+                            ctx.revdata_try_load(get_revs_from)
                         }
 
                         if (ctx.containsKey('preStartHook')) {
