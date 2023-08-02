@@ -22,6 +22,7 @@ def create_pipeline_ctx(env, params) {
     dlg.teMeta = teMeta
     dlg.teRevData = teRevData
     dlg.teDPDK = teDPDK
+    dlg.teOVS = teOVS
     dlg.teCommon = this
 
     dlg.env = env

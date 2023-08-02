@@ -1,0 +1,94 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2022-2023 OKTET Labs Ltd. All rights reserved.
+//
+// Pipeline for building Open vSwitch (to check whether a given
+// revision of a given repository is buildable).
+//
+// Pipeline is run on a node with label 'main'. It searches for
+// all nodes having label specified in 'label' parameter (by
+// default - 'build-ovs') and builds Open vSwitch on all of them.
+
+library('teLib') _
+
+def ctx = teCommon.create_pipeline_ctx(env, params)
+
+pipeline {
+    parameters {
+        string name: 'label', trim: true,
+               description: 'Nodes to build on',
+               defaultValue: 'build-ovs'
+        string name: 'ovs_repo', trim: true,
+               description: 'Git repository URL (sticky default)',
+               defaultValue: params.ovs_repo
+        string name: 'ovs_branch', trim: true,
+               description: 'Git branch (sticky default)',
+               defaultValue: params.ovs_branch
+        string name: 'ovs_rev', trim: true,
+               description: 'Revision to build',
+               defaultValue: ''
+    }
+
+    options {
+        buildDiscarder(logRotator(daysToKeepStr:'15', numToKeepStr:'100'))
+        disableConcurrentBuilds()
+        timestamps()
+        checkoutToSubdirectory('te-jenkins')
+        copyArtifactPermission('*')
+    }
+
+    triggers {
+        pollSCM('H * * * *')
+    }
+
+    agent {
+        label "main"
+    }
+
+    stages {
+        stage("Snapshot") {
+            steps {
+                script {
+                    teOVS.checkout(ctx: ctx)
+                }
+            }
+        }
+
+        stage("Build") {
+            steps {
+                script {
+                    teCommon.do_on_nodes params.label, {
+                        teCommon.checkout_lib()
+                        teOVS.checkout(ctx: ctx, do_poll: false)
+                        teOVS.build()
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                ctx.revdata_archive()
+
+                teEmail.email_add_to_by_ids(ctx, "OVS")
+                teEmail.email_set_prefix(
+                                ctx, "[CI OVS] ${ctx.JOB_LAST_NAME}")
+            }
+        }
+
+        unsuccessful {
+            script {
+                teEmail.email_set_trailer(ctx, 'unsuccessful')
+                teEmail.email_post(ctx, false)
+            }
+        }
+
+        fixed {
+            script {
+                teEmail.email_set_trailer(ctx, 'fixed')
+                teEmail.email_post(ctx, true)
+            }
+        }
+    }
+}
