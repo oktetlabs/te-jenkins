@@ -83,3 +83,35 @@ def getNodes(String label) {
         node.name
     }
 }
+
+// Check out sources of this library.
+//
+// Args:
+//   do_poll: if true, this checkout should be taken into
+//            account when polling SCM
+def checkout_lib(Boolean do_poll = false) {
+    dir('te-jenkins') {
+        // changelog should not influence polling, but in fact
+        // it does.
+        checkout(scm: scm, poll: do_poll, changelog: do_poll)
+    }
+}
+
+// Execute a given code on all nodes with a given label.
+//
+// Args:
+//   label: label to look for
+//   body: closure with code to execute
+def do_on_nodes(String label, Closure body) {
+    def actions = [:]
+    def nodes = getNodes(label)
+
+    for (target_node in nodes) {
+        actions[target_node] = {
+            node(target_node) {
+                body.call()
+            }
+        }
+    }
+    parallel actions
+}

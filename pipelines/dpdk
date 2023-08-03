@@ -59,22 +59,11 @@ pipeline {
         stage("Build") {
             steps {
                 script {
-                    def builders = [:]
-                    def nodes = teCommon.getNodes(params.label)
-
-                    for (build_node in nodes) {
-                        builders[build_node] = {
-                            node(build_node) {
-                                dir('te-jenkins') {
-                                    checkout scm
-                                }
-
-                                teDPDK.checkout(ctx: ctx, do_poll: false)
-                                teDPDK.build()
-                            }
-                        }
+                    teCommon.do_on_nodes params.label, {
+                        teCommon.checkout_lib()
+                        teDPDK.checkout(ctx: ctx, do_poll: false)
+                        teDPDK.build()
                     }
-                    parallel builders
                 }
             }
         }
