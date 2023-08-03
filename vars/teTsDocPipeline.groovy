@@ -227,7 +227,7 @@ def call(Closure body) {
             cleanup {
                 script {
                     if (doc_status in ctx.send_on_status) {
-                        teEmail.email_start()
+                        teEmail.email_start(ctx)
                         teEmail.email_all_revs(ctx.all_revs)
                         teEmail.email_post(ctx, build_status, [])
                     }

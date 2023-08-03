@@ -12,26 +12,6 @@ library('teLib') _
 
 def ctx = teCommon.create_pipeline_ctx(env, params)
 
-// Send email about build status.
-// It is assumed that TE_EMAIL_TO_DPDK in environment
-// contains destination address(es).
-//
-// Args:
-//   ctx: pipeline context
-//   status: (true or false, meaning success or failure)
-//   trailer: optional trailer for email subject
-def post_email(ctx, Boolean status, String trailer = null) {
-    teEmail.email_add_to_by_ids(ctx, "DPDK")
-    teEmail.email_set_prefix(ctx, "[CI DPDK] ${ctx.job_last_name}")
-
-    if (trailer) {
-        teEmail.email_set_trailer(ctx, trailer)
-    }
-
-    teEmail.email_start()
-    teEmail.email_post(ctx, status, null)
-}
-
 pipeline {
     parameters {
         string name: 'label', trim: true,
@@ -104,18 +84,24 @@ pipeline {
         always {
             script {
                 ctx.revdata_archive()
+
+                teEmail.email_add_to_by_ids(ctx, "DPDK")
+                teEmail.email_set_prefix(
+                                ctx, "[CI DPDK] ${ctx.JOB_LAST_NAME}")
             }
         }
 
         unsuccessful {
             script {
-                post_email(ctx, false, 'unsuccessful')
+                teEmail.email_set_trailer(ctx, 'unsuccessful')
+                teEmail.email_post(ctx, false)
             }
         }
 
         fixed {
             script {
-                post_email(ctx, true, 'fixed')
+                teEmail.email_set_trailer(ctx, 'fixed')
+                teEmail.email_post(ctx, true)
             }
         }
     }

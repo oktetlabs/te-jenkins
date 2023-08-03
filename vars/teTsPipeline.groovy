@@ -213,7 +213,7 @@ def call(Closure body) {
                         // previous run results are not saved as artifacts
                         teRun.cleanup()
 
-                        teEmail.email_start()
+                        teEmail.email_start(ctx)
                     }
                 }
             }

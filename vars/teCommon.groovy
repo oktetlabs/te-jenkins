@@ -27,6 +27,12 @@ def create_pipeline_ctx(env, params) {
     dlg.env = env
     dlg.params = params
 
+    if (env.JOB_NAME) {
+        // Having job name without full path can be better
+        // for logging.
+        dlg.JOB_LAST_NAME = env.JOB_NAME.replaceAll(/^.*\//, '')
+    }
+
     // Having reference to this delegate itself makes it
     // simpler to use some API methods
     dlg.teCtx = dlg

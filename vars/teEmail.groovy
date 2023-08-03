@@ -79,7 +79,10 @@ def email_file_get() {
 }
 
 // Reset email message: make it clean and print basic job info
-def email_start() {
+//
+// Args:
+//   ctx: pipeline context
+def email_start(ctx) {
     def email_file = email_file_get()
     sh "echo > ${email_file}"
 
@@ -90,6 +93,8 @@ def email_start() {
     email_message("Build URL: ${env.BUILD_URL}")
     email_message("Timestamp: ${env.BUILD_TIMESTAMP}")
     email_newline()
+
+    ctx.EMAIL_STARTED = true
 }
 
 // Add message to email
@@ -152,11 +157,15 @@ def email_stage(String stage) {
 //   ctx: pipeline context
 //   status: status of build
 //   providers: recipient providers, i.e. requestor() or culprits() etc...
-def email_post(ctx, status, providers) {
+def email_post(ctx, status, providers = null) {
     def email_from
     def email_file = email_file_get()
     def prefix = ctx.EMAIL_PREFIX ?: "[CI ${env.JOB_NAME}]"
     def subject
+
+    if (!ctx.EMAIL_STARTED) {
+        email_start(ctx)
+    }
 
     email_newline()
     if (status) {
