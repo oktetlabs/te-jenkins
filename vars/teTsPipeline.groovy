@@ -305,6 +305,10 @@ def call(Closure body) {
 
                             teEmail.email_stage('Run')
 
+                            if (ctx.containsKey('preRunHook')) {
+                                ctx.preRunHook()
+                            }
+
                             // Prepare initial meta_data.json for live logs
                             // listener.
                             if (ctx.TS_LOG_LISTENER_NAME) {
@@ -313,10 +317,6 @@ def call(Closure body) {
                                 ctx.metas.RUN_STATUS = "RUNNING"
                                 teMeta.meta_generate(ctx)
                                 ctx.metas.RUN_STATUS = "ERROR"
-                            }
-
-                            if (ctx.containsKey('preRunHook')) {
-                                ctx.preRunHook()
                             }
 
                             def opts = ctx.optionsProvider()
