@@ -25,13 +25,17 @@ def email_set_from(ctx, String address) {
 //
 // Args:
 //   ctx: pipeline context
-//   address: email addresses (should be separated
-//            by ';')
-def email_add_to(ctx, String address) {
+//   addresses: email addresses (should be separated
+//              by ';')
+def email_add_to(ctx, String addresses) {
     if (ctx.EMAIL_TO == null) {
-        ctx.EMAIL_TO = ""
+        ctx.EMAIL_TO = [:]
     }
-    ctx.EMAIL_TO += "${address};"
+
+    addresses.tokenize(';').each {
+        addr ->
+        ctx.EMAIL_TO[addr] = true
+    }
 }
 
 // Add email recipients by identifiers.
@@ -39,12 +43,16 @@ def email_add_to(ctx, String address) {
 // TE_EMAIL_TO_<id> is defined in environment. If
 // it is defined, recipients from its value are added.
 //
+// Note: every <id> is turned into upper case, all '-' symbols
+// are replaced with '_'. This simplifies usage of test suite
+// names as identifiers here.
+//
 // Args:
 //   ctx: pipeline context
 //   ids: one or more string identifiers
 def email_add_to_by_ids(ctx, String... ids) {
     ids.each { id ->
-        def var_name = "TE_EMAIL_TO_${id}"
+        def var_name = "TE_EMAIL_TO_${id.toUpperCase().replaceAll(/-/, '_')}"
         if (env[var_name]) {
             email_add_to(ctx, env[var_name])
         }
@@ -159,9 +167,18 @@ def email_stage(String stage) {
 //   providers: recipient providers, i.e. requestor() or culprits() etc...
 def email_post(ctx, status, providers = null) {
     def email_from
+    def email_to = ""
     def email_file = email_file_get()
     def prefix = ctx.EMAIL_PREFIX ?: "[CI ${env.JOB_NAME}]"
     def subject
+
+    if (ctx.EMAIL_TO)
+        email_to = ctx.EMAIL_TO.keySet().join(';')
+
+    if (!email_to) {
+        println "No destination email address is specified"
+        return
+    }
 
     if (!ctx.EMAIL_STARTED) {
         email_start(ctx)
@@ -189,7 +206,7 @@ def email_post(ctx, status, providers = null) {
 
     emailext (
         subject: "${subject}",
-        to: ctx.EMAIL_TO,
+        to: email_to,
         from: email_from,
         recipientProviders: providers,
         attachLog: true,

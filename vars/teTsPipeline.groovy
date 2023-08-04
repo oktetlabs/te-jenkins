@@ -152,6 +152,14 @@ def call(Closure body) {
         stages {
             stage('Job prepare') {
                 steps {
+                    script {
+                        if (ctx.ts_name) {
+                            teEmail.email_add_to_by_ids(ctx, ctx.ts_name)
+                        }
+
+                        teEmail.email_start(ctx)
+                    }
+
                     echo "Workspace: ${env.WORKSPACE}"
                     echo "Job: ${env.JOB_NAME}"
                     echo "Host: ${env.NODE_NAME}"
@@ -212,8 +220,6 @@ def call(Closure body) {
                         // Do cleanup as the first action to ensure that
                         // previous run results are not saved as artifacts
                         teRun.cleanup()
-
-                        teEmail.email_start(ctx)
                     }
                 }
             }

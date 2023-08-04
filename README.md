@@ -332,3 +332,19 @@ You may add multiple run jobs, for example, one for every configuration,
 and mention them in a schedule stored in a pipeline for scheduled
 runs. Or you can use the single run job for all configurations,
 passing different `ts_cfg` values to it.
+
+### Configuring email sending
+
+By default destination addresses for emails about pipeline result
+are taken from `TE_EMAIL_TO_<ts_name>` environment variable where
+`ts_name` is set inside closure passed to pipeline template (see
+example above). However `ts_name` value is capitalized here and
+all `-` symbols are replaced with `_`. So for `sample-ts` test suite
+this variable is called `TE_EMAIL_TO_SAMPLE_TS`. You can specify
+multiple destination addresses, using ';' as a separator.
+
+Source email address is taken from `TE_EMAIL_FROM_DEF` environment
+variable. Its value can contain `__USER__` string which is replaced
+by current user name when sending email.
+
+See also comments in `vars/teEmail.groovy`.
