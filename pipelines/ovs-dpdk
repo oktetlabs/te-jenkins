@@ -1,0 +1,110 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2022-2023 OKTET Labs Ltd. All rights reserved.
+//
+// Pipeline for building Open vSwitch with DPDK (to check whether
+// a given revision of a given repository is buildable).
+//
+// Pipeline is run on a node with label 'main'. It searches for
+// all nodes having label specified in 'label' parameter (by
+// default - 'build-ovs') and builds Open vSwitch with DPDK on
+// all of them.
+
+library('teLib') _
+
+def ctx = teCommon.create_pipeline_ctx(env, params)
+
+pipeline {
+    parameters {
+        string name: 'label', trim: true,
+               description: 'Nodes to build on',
+               defaultValue: 'build-ovs'
+        string name: 'ovs_repo', trim: true,
+               description: 'Git repository URL (sticky default)',
+               defaultValue: params.ovs_repo
+        string name: 'ovs_branch', trim: true,
+               description: 'Git branch (sticky default)',
+               defaultValue: params.ovs_branch
+        string name: 'ovs_rev', trim: true,
+               description: 'Revision to build',
+               defaultValue: ''
+        string name: 'dpdk', trim: true,
+               description: 'Job from which to get DPDK revision (sticky default)',
+               defaultValue: params.dpdk
+    }
+
+    options {
+        buildDiscarder(logRotator(daysToKeepStr:'15', numToKeepStr:'100'))
+        disableConcurrentBuilds()
+        timestamps()
+        checkoutToSubdirectory('te-jenkins')
+        copyArtifactPermission('*')
+    }
+
+    triggers {
+        pollSCM('H * * * *')
+    }
+
+    agent {
+        label "main"
+    }
+
+    stages {
+        stage("Snapshot") {
+            steps {
+                script {
+                    if (!params.dpdk) {
+                        error("DPDK job must be specified")
+                    }
+
+                    ctx.revdata_try_load(params.dpdk)
+                    teDPDK.checkout(ctx: ctx)
+                    teOVS.checkout(ctx: ctx)
+                }
+            }
+        }
+
+        stage("Build") {
+            steps {
+                script {
+                    teCommon.do_on_nodes params.label, {
+                        def dpdk_prefix = env.WORKSPACE + '/dpdk-inst'
+
+                        teCommon.checkout_lib()
+
+                        teDPDK.checkout(ctx: ctx, do_poll: false)
+                        teDPDK.build('dpdk', dpdk_prefix)
+
+                        teOVS.checkout(ctx: ctx, do_poll: false)
+                        teOVS.build('ovs', dpdk_prefix)
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                ctx.revdata_archive()
+
+                teEmail.email_add_to_by_ids(ctx, "OVS-DPDK")
+                teEmail.email_set_prefix(
+                                ctx, "[CI OVS-DPDK] ${ctx.JOB_LAST_NAME}")
+            }
+        }
+
+        unsuccessful {
+            script {
+                teEmail.email_set_trailer(ctx, 'unsuccessful')
+                teEmail.email_post(ctx, false)
+            }
+        }
+
+        fixed {
+            script {
+                teEmail.email_set_trailer(ctx, 'fixed')
+                teEmail.email_post(ctx, true)
+            }
+        }
+    }
+}
