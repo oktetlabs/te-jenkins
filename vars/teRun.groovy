@@ -119,6 +119,7 @@ def generic_checkout(ctx, String component, String url = null,
 
     def scm_vars
     String rev = revision ?: get_rev(ctx, component)
+    String rev_got
     String repo = url ?: get_url(ctx, component)
     String var_prefix
     String prev_rev
@@ -134,14 +135,19 @@ def generic_checkout(ctx, String component, String url = null,
         scm_vars = git_checkout(repo, rev, do_poll)
 
         ctx["${var_prefix}SRC"] = pwd()
+
+        // scm_vars.GIT_COMMIT can report wrong revision (of default
+        // branch) when we check out specific revision and
+        // move to "detached" state.
+        rev_got = git_get_rev()
     }
 
     ctx.revdata_set(component, "${var_prefix}GIT_URL", repo)
 
     prev_rev = ctx.revdata_get(component, "${var_prefix}REV")
-    ctx.revdata_set(component, "${var_prefix}REV", scm_vars.GIT_COMMIT)
+    ctx.revdata_set(component, "${var_prefix}REV", rev_got)
 
-    if (prev_rev != scm_vars.GIT_COMMIT) {
+    if (prev_rev != rev_got) {
         // Clean branch if it was inherited from artifacts of upstream
         // job and revision was not taken from there.
 
@@ -157,7 +163,7 @@ def generic_checkout(ctx, String component, String url = null,
     }
 
     ctx.metas["${var_prefix}GIT_URL"] = repo
-    ctx.metas["${var_prefix}REV"] = scm_vars.GIT_COMMIT
+    ctx.metas["${var_prefix}REV"] = rev_got
 
     if ((branch = ctx.revdata_get(component, "${var_prefix}BRANCH"))) {
         ctx.metas["${var_prefix}BRANCH"] = branch
