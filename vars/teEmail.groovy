@@ -52,7 +52,7 @@ def email_add_to(ctx, String addresses) {
 //   ids: one or more string identifiers
 def email_add_to_by_ids(ctx, String... ids) {
     ids.each { id ->
-        def var_name = "TE_EMAIL_TO_${id.toUpperCase().replaceAll(/-/, '_')}"
+        def var_name = "TE_EMAIL_TO_${teCommon.str2id(id)}"
         if (env[var_name]) {
             email_add_to(ctx, env[var_name])
         }

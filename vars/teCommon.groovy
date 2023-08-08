@@ -116,3 +116,15 @@ def do_on_nodes(String label, Closure body) {
     }
     parallel actions
 }
+
+// Make a suitable identifier from a string by capitalizing
+// it and replacing some characters with '_'.
+//
+// Args:
+//   str: String to make identifier from
+//
+// Return:
+//   identifier
+String str2id(String str) {
+    return str.toUpperCase().replaceAll(/[^A-Z_0-9]/, /_/)
+}

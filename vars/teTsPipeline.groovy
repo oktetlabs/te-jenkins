@@ -283,6 +283,14 @@ def call(Closure body) {
 
                         teRun.te_checkout(ctx)
                         teRun.ts_checkout(ctx)
+
+                        if (ctx.ts_name) {
+                            // Add revision meta named after test suite -
+                            // it helps to access test suite revision
+                            // in Bublik web application.
+                            ctx.metas[teCommon.str2id(ctx.ts_name)
+                                      + "_REV"] = ctx.metas["TS_REV"]
+                        }
                     }
                 }
             }
