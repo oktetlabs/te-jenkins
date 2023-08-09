@@ -410,6 +410,7 @@ def statistics() {
 // Return:
 //   List of checkout details as per GitSCM module.
 def git_checkout(String url, String revision, Boolean do_poll = true) {
+    def result = null
     def scm_params = [
         $class: 'GitSCM',
         userRemoteConfigs: [[url: url]],
@@ -428,7 +429,21 @@ def git_checkout(String url, String revision, Boolean do_poll = true) {
         scm_params.branches = [[name: revision]]
     }
 
-    return checkout(scm: scm_params, poll: do_poll)
+    // changelog should not influence polling, but in fact
+    // it does; it appears poll = false alone does not disable
+    // polling if changelog is still enabled.
+    result = checkout(scm: scm_params, poll: do_poll, changelog: do_poll)
+
+    // This cleans .git directory. It can grow very large after
+    // repeated checkouts in the same directory when shallow clone
+    // is configured as it is done above with CloneOption (that was
+    // actually observed for unbound tool).
+    //
+    // It seems there is no way to do this via checkout step:
+    // https://issues.jenkins.io/browse/JENKINS-13493
+    sh('git gc')
+
+    return result
 }
 
 // Get git revision in the current directory.
