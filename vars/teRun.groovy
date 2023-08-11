@@ -157,7 +157,7 @@ def generic_checkout(ctx, String component, String url = null,
     // 'detached' means that repository was checked out to a specific
     // changeset, not a branch. Hopefully nobody calls a real
     // branch 'detached'.
-    if (scm_vars.GIT_BRANCH != 'detached') {
+    if (scm_vars.GIT_BRANCH && scm_vars.GIT_BRANCH != 'detached') {
         ctx.revdata_set(component, "${var_prefix}BRANCH",
                         scm_vars.GIT_BRANCH - ~/^\/?origin\//)
     }
