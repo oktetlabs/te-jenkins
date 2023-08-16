@@ -553,7 +553,8 @@ def define_logs_paths(ctx) {
     }
 
     ctx.LOGS_PATH = ctx.LOGS_PATH ?:
-                    ctx.TS_LOGS_SUBPATH + ctx.metas.CAMPAIGN_DATE +
+                    ctx.TS_LOGS_SUBPATH +
+                    ctx.metas.CAMPAIGN_DATE.replaceAll(/-/, '/') +
                     '/' + params.ts_cfg + '-' + env.BUILD_NUMBER
 
     if (ctx.TS_LOGS_URL_PREFIX) {
