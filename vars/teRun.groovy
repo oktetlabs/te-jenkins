@@ -303,6 +303,7 @@ def run(ctx, String cfg, options) {
         def start_options = []
         Boolean rm_te_logs = false
         String te_logs
+        String cmd
 
         env.TE_BUILD = "${env.WORKSPACE}/build"
 
@@ -334,11 +335,24 @@ def run(ctx, String cfg, options) {
         opts += " --log-junit=log.junit"
         // TRC statistics in text form is used by Bublik.
         opts += " --trc-txt=trc-stats.txt"
+
+        cmd = "${ctx.TE_SRC}/jenkins/scripts/te_run_wrap "
+        cmd += "${ctx.TS_SRC}/scripts/run.sh ${opts}"
         try {
-            sh "${ctx.TS_SRC}/scripts/run.sh ${opts}"
+            env.TE_RUN_WRAP_PREFIX = pwd() + "/te_run"
+            ts_run_pid = sh(script: "${cmd}", returnStdout: true).trim()
+
+            sh("${ctx.TE_SRC}/jenkins/scripts/te_run_wait " +
+               "${ts_run_pid}")
         } catch (err) {
             run_sh_err = err
         } finally {
+            // If testing terminated already, this should be harmless.
+            // Otherwise this will ensure that it terminates in a normal
+            // way in case of pipeline abort.
+            sh("${ctx.TE_SRC}/jenkins/scripts/te_run_wait " +
+               "${ts_run_pid} stop")
+
             if (rm_te_logs) {
                 if (fileExists(env.TE_LOG_BUNDLE)) {
                     sh "mv ${env.TE_LOG_BUNDLE} ."
