@@ -107,7 +107,11 @@ def do_on_nodes(String label, Closure body) {
     def actions = [:]
     def nodes = getNodes(label)
 
-    for (target_node in nodes) {
+    for (p in nodes) {
+        // Creating this variable helps to ensure
+        // that each closure with node() references
+        // different node name.
+        def target_node = p
         actions[target_node] = {
             node(target_node) {
                 body.call()
