@@ -138,7 +138,7 @@ def call(Closure body) {
         agent { label ctx.label }
 
         options {
-            buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '100'))
+            buildDiscarder(logRotator(numToKeepStr: '100', artifactNumToKeepStr: '100'))
             timestamps()
             copyArtifactPermission('*')
             checkoutToSubdirectory('te-jenkins')
