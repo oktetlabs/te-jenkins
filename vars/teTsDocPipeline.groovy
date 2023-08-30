@@ -231,7 +231,7 @@ def call(Closure body) {
                             teEmail.email_add_to_by_ids(ctx, ctx.ts_name)
                         }
                         teEmail.email_start(ctx)
-                        teEmail.email_all_revs(ctx.all_revs)
+                        teEmail.email_all_revs(ctx)
                         teEmail.email_post(ctx, build_status, [])
                     }
                 }

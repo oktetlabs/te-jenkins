@@ -78,85 +78,79 @@ def email_set_trailer(ctx, String trailer) {
     ctx.EMAIL_TRAILER = trailer
 }
 
-// Get path to a file where email message text is constructed.
-//
-// Return:
-//   Email file path relative to WORKSPACE
-def email_file_get() {
-    return "${env.WORKSPACE}/email.txt"
-}
-
 // Reset email message: make it clean and print basic job info
 //
 // Args:
 //   ctx: pipeline context
 def email_start(ctx) {
-    def email_file = email_file_get()
-    sh "echo > ${email_file}"
+    ctx.email_text = ""
 
-    email_variable_message('WORKSPACE', env.WORKSPACE)
-    email_variable_message('JOB_NAME', env.JOB_NAME)
-    email_variable_message('NODE_NAME', env.NODE_NAME)
-    email_newline()
-    email_message("Build URL: ${env.BUILD_URL}")
-    email_message("Timestamp: ${env.BUILD_TIMESTAMP}")
-    email_newline()
-
-    ctx.EMAIL_STARTED = true
+    email_variable_message(ctx, 'WORKSPACE', env.WORKSPACE)
+    email_variable_message(ctx, 'JOB_NAME', env.JOB_NAME)
+    email_variable_message(ctx, 'NODE_NAME', env.NODE_NAME)
+    email_newline(ctx)
+    email_message(ctx, "Build URL: ${env.BUILD_URL}")
+    email_message(ctx, "Timestamp: ${env.BUILD_TIMESTAMP}")
+    email_newline(ctx)
 }
 
 // Add message to email
 //
 // Args:
+//   ctx: pipeline context
 //   message: message string
-def email_message(String message) {
-    def email_file = email_file_get()
-    sh "echo '${message}' >> ${email_file}"
+def email_message(ctx, String message) {
+    ctx.email_text += message + "\n"
 }
 
 // Just wrapper for adding empty line
-def email_newline() {
-    email_message("")
+//
+// Args:
+//   ctx: pipeline context
+def email_newline(ctx) {
+    email_message(ctx, "")
 }
 
 // Add variable to email
 //
 // Args:
+//   ctx: pipeline context
 //   name: name of variable
 //   value: value of variable
-def email_variable_message(String name, String value) {
-    email_message("${name}=${value}")
+def email_variable_message(ctx, String name, String value) {
+    email_message(ctx, "${name}=${value}")
 }
 
 // Add all revisions to email text. Revision are taken
 // from the map constructed with help of teRevData.
 //
 // Args:
-//   revs: map with revisions
-def email_all_revs(Map revs) {
+//   ctx: pipeline context
+def email_all_revs(ctx) {
     def revs_only = []
 
-    teRevData.iterate_values(revs, {
+    teRevData.iterate_values(ctx.all_revs, {
         component, variable, value ->
         if (variable ==~ /.*_REV$/) {
             revs_only.add("${variable}=${value}")
         }
     })
 
-    email_newline()
-    email_message("Revisions:")
+    email_newline(ctx)
+    email_message(ctx, "Revisions:")
     revs_only.sort().each {
         value ->
-        email_message(value)
+        email_message(ctx, value)
     }
 }
 
 // Add stage to email
 //
 // Args:
+//   ctx: pipeline context
 //   stage: stage name
-def email_stage(String stage) {
-    email_message("STAGE: ${stage}")
+def email_stage(ctx, String stage) {
+    email_message(ctx, "STAGE: ${stage}")
 }
 
 // Post email by status
@@ -168,7 +162,6 @@ def email_stage(String stage) {
 def email_post(ctx, status, providers = null) {
     def email_from
     def email_to = ""
-    def email_file = email_file_get()
     def prefix = ctx.EMAIL_PREFIX ?: "[CI ${env.JOB_NAME}]"
     def subject
 
@@ -180,17 +173,17 @@ def email_post(ctx, status, providers = null) {
         return
     }
 
-    if (!ctx.EMAIL_STARTED) {
+    if (!ctx.email_text) {
         email_start(ctx)
     }
 
-    email_newline()
+    email_newline(ctx)
     if (status) {
-        email_message("OK")
+        email_message(ctx, "OK")
     } else {
-        email_message("FAIL")
+        email_message(ctx, "FAIL")
     }
-    email_newline()
+    email_newline(ctx)
 
     subject = "${prefix} job ${currentBuild.displayName}: "
     subject += "${currentBuild.currentResult}"
@@ -211,6 +204,8 @@ def email_post(ctx, status, providers = null) {
         recipientProviders: providers,
         attachLog: true,
         attachmentsPattern: '**/trc-brief.html',
-        body: '${FILE, path="' + email_file + '"}'
+        body: ctx.email_text
     )
+
+    ctx.email_text = ""
 }

@@ -227,7 +227,7 @@ def call(Closure body) {
             stage('Pre start') {
                 steps {
                     script {
-                        teEmail.email_stage('Pre start')
+                        teEmail.email_stage(ctx, 'Pre start')
 
                         ctx.metas.TS_NAME = ctx.ts_name ?: ""
                         ctx.metas.CFG = params.ts_cfg ?: ""
@@ -268,7 +268,7 @@ def call(Closure body) {
                 when { expression { env.TSRIGS_GIT_URL } }
                 steps {
                     script {
-                        teEmail.email_stage('Clone ts-rigs sources')
+                        teEmail.email_stage(ctx, 'Clone ts-rigs sources')
                         teRun.tsrigs_checkout(ctx)
 
                         teRun.tsrigs_load(ctx)
@@ -279,7 +279,7 @@ def call(Closure body) {
             stage('Clone TE and TS sources') {
                 steps {
                     script {
-                        teEmail.email_stage('Clone TE/TS sources')
+                        teEmail.email_stage(ctx, 'Clone TE/TS sources')
 
                         teRun.te_checkout(ctx)
                         teRun.ts_checkout(ctx)
@@ -299,7 +299,7 @@ def call(Closure body) {
                 when { expression { ctx.tsconf } }
                 steps {
                     script {
-                        teEmail.email_stage('Clone ts-conf sources')
+                        teEmail.email_stage(ctx, 'Clone ts-conf sources')
                         teRun.tsconf_checkout(ctx)
                     }
                 }
@@ -317,7 +317,7 @@ def call(Closure body) {
 
                             teRun.define_logs_paths(ctx)
 
-                            teEmail.email_stage('Run')
+                            teEmail.email_stage(ctx, 'Run')
 
                             if (ctx.containsKey('preRunHook')) {
                                 ctx.preRunHook()
@@ -368,7 +368,7 @@ def call(Closure body) {
             stage('Save statistics') {
                 steps {
                     script {
-                        teEmail.email_stage('Save statistics')
+                        teEmail.email_stage(ctx, 'Save statistics')
 
                         ctx.ts_stats = teRun.statistics()
                     }
@@ -380,7 +380,7 @@ def call(Closure body) {
         post {
             always {
                 script {
-                    teEmail.email_all_revs(ctx.all_revs)
+                    teEmail.email_all_revs(ctx)
 
                     if (ctx.ts_stats != null) {
                         def total = ctx.ts_stats.totalCount
@@ -418,17 +418,17 @@ def call(Closure body) {
                         teRun.publish_logs(ctx)
 
                         if (env.HTML_LOGS) {
-                            teEmail.email_newline()
-                            teEmail.email_message("Logs archive:")
-                            teEmail.email_message("${env.HTML_LOGS}")
+                            teEmail.email_newline(ctx)
+                            teEmail.email_message(ctx, "Logs archive:")
+                            teEmail.email_message(ctx, "${env.HTML_LOGS}")
                         }
                     }
 
-                    teEmail.email_newline()
-                    teEmail.email_message("Parameters:")
+                    teEmail.email_newline(ctx)
+                    teEmail.email_message(ctx, "Parameters:")
                     params.sort().each {
                         name, value ->
-                        teEmail.email_message("${name}=${value}")
+                        teEmail.email_message(ctx, "${name}=${value}")
                     }
 
                     if (ctx.containsKey('postAlwaysHook')) {
