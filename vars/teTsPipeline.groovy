@@ -84,6 +84,13 @@
 //                       become sticky too.
 //   publish_logs: if true, logs should be published (copied to permanent
 //                 storage, exported to Bublik)
+//   concurrent_builds: if true, multiple instances of this pipeline
+//                      can be run in parallel. This is useful when
+//                      you have a few testing configurations and
+//                      want to run tests on them simultaneously.
+//                      Lock at run stage should prevent running
+//                      two instances of the pipeline on the same
+//                      configuration.
 //
 // Available pipeline hooks (see "Pipeline does" for understanding when hook
 // is called):
@@ -142,11 +149,6 @@ def call(Closure body) {
             timestamps()
             copyArtifactPermission('*')
             checkoutToSubdirectory('te-jenkins')
-
-            // Concurrent builds are enabled to make it possible to define
-            // the single pipeline and use it for running testing on
-            // multiple hosts simultaneously. Lock at run stage should
-            // be used to prevent simultaneous access to the same resource.
         }
 
         stages {
@@ -198,6 +200,8 @@ def call(Closure body) {
                                   description: 'Jobs providing revisions to use (sticky default; comma-separated list)'),
                         ]
 
+                        def propsList = []
+
                         paramsList.addAll(teRun.get_repo_params(
                                                       params, ctx))
 
@@ -210,10 +214,13 @@ def call(Closure body) {
                                 ctx.triggersProvider()
                         }
 
-                        properties([
-                            parameters(paramsList),
-                            pipelineTriggers(triggersList),
-                        ])
+                        propsList = [ parameters(paramsList),
+                                      pipelineTriggers(triggersList) ]
+                        if (!ctx.concurrent_builds) {
+                            propsList += [ disableConcurrentBuilds() ]
+                        }
+
+                        properties(propsList)
                     }
 
                     script {
