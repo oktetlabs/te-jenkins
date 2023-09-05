@@ -91,6 +91,16 @@
 //                      Lock at run stage should prevent running
 //                      two instances of the pipeline on the same
 //                      configuration.
+//  email_conditions: can be set to a list of conditions when email
+//                    should be sent at the end. List can include
+//                    the following strings:
+//                    - "success": successful run
+//                    - "fixed": successful run when the previous one
+//                      was unsuccessful
+//                    - "unsuccessful": unsuccessful run
+//                    If this parameter was not set, email is always
+//                    sent. If it is set to empty list, email is
+//                    never sent.
 //
 // Available pipeline hooks (see "Pipeline does" for understanding when hook
 // is called):
@@ -132,6 +142,7 @@ def call(Closure body) {
     // update_job is the previous name, mentioned here to
     // avoid breaking existing pipelines.
     def get_revs_from = params.get_revs_from ?: params.update_job
+    def post_conds = []
 
     // DELEGATE_FIRST means that the delegate is used firstly
     // to resolve properties. So that any property set in closure
@@ -445,7 +456,7 @@ def call(Closure body) {
             }
             success {
                 script {
-                    teEmail.email_post(ctx, true, emailRecipientProviders)
+                    post_conds += [ 'success' ]
 
                     if (params.downstream_jobs) {
                         params.downstream_jobs.tokenize(',').each {
@@ -455,9 +466,16 @@ def call(Closure body) {
                     }
                 }
             }
+            fixed {
+                script {
+                    post_conds += [ 'fixed' ]
+                    teEmail.email_set_trailer(ctx, 'fixed')
+                }
+            }
             unsuccessful {
                 script {
-                    teEmail.email_post(ctx, false, emailRecipientProviders)
+                    post_conds += [ 'unsuccessful' ]
+
                     if (ctx.containsKey('postUnsuccessfulHook')) {
                         ctx.postUnsuccessfulHook()
                     }
@@ -465,6 +483,13 @@ def call(Closure body) {
             }
             cleanup {
                 script {
+                    if (ctx.email_conditions == null ||
+                        ctx.email_conditions.intersect(post_conds)) {
+                        teEmail.email_post(ctx,
+                                           post_conds.contains('success'),
+                                           emailRecipientProviders)
+                    }
+
                     if (ctx.containsKey('postCleanupHook')) {
                         ctx.postCleanupHook()
                     }
