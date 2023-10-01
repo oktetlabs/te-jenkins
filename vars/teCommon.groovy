@@ -38,8 +38,6 @@ def create_pipeline_ctx(env, params) {
     // simpler to use some API methods
     dlg.teCtx = dlg
 
-    dlg.metas = [:]
-
     teRevData.init_ctx(dlg)
 
     return dlg

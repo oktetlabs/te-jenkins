@@ -247,11 +247,6 @@ def call(Closure body) {
                     script {
                         teEmail.email_stage(ctx, 'Pre start')
 
-                        ctx.metas.TS_NAME = ctx.ts_name ?: ""
-                        ctx.metas.CFG = params.ts_cfg ?: ""
-
-                        ctx.metas.TCE = params.with_tce ? 'true' : 'false'
-
                         def date_str
                         if (env.CAMPAIGN_DATE_OFFSET) {
                             date_str = env.CAMPAIGN_DATE_OFFSET
@@ -262,14 +257,11 @@ def call(Closure body) {
                             // midnight on the same evening.
                             date_str = "+6 hours"
                         }
-                        ctx.metas.CAMPAIGN_DATE = sh(
+
+                        env.TE_META_START_TS = teMeta.meta_timestamp_make()
+                        env.TE_META_CAMPAIGN_DATE = sh(
                               script: "date --date=\"${date_str}\" +%F",
                               returnStdout: true).trim()
-
-                        ctx.metas.START_TIMESTAMP =
-                                          teMeta.meta_timestamp_make()
-                        ctx.metas.RUN_OK = "false"
-                        ctx.metas.RUN_STATUS = "ERROR"
 
                         if (get_revs_from) {
                             ctx.revdata_try_load(get_revs_from)
@@ -301,14 +293,6 @@ def call(Closure body) {
 
                         teRun.te_checkout(ctx)
                         teRun.ts_checkout(ctx)
-
-                        if (ctx.ts_name) {
-                            // Add revision meta named after test suite -
-                            // it helps to access test suite revision
-                            // in Bublik web application.
-                            ctx.metas[teCommon.str2id(ctx.ts_name)
-                                      + "_REV"] = ctx.metas["TS_REV"]
-                        }
                     }
                 }
             }
@@ -328,11 +312,6 @@ def call(Closure body) {
                     script {
                         teRun.cfg_lock ctx, {
 
-                            // Bublik needs PROJECT to be present in metadata
-                            // for sanity check. Do it here because
-                            // ctx.PROJECT may be defined in ts-rigs.
-                            ctx.metas.PROJECT = ctx.PROJECT ?: ctx.ts_name ?: ""
-
                             teRun.define_logs_paths(ctx)
 
                             teEmail.email_stage(ctx, 'Run')
@@ -341,26 +320,19 @@ def call(Closure body) {
                                 ctx.preRunHook()
                             }
 
-                            // Prepare initial meta_data.json for live logs
-                            // listener.
-                            if (ctx.TS_LOG_LISTENER_NAME) {
-                                // Temporarily set status to running to
-                                // have it in live import metadata
-                                ctx.metas.RUN_STATUS = "RUNNING"
-                                teMeta.meta_generate(ctx)
-                                ctx.metas.RUN_STATUS = "ERROR"
-                            }
-
                             def opts = ctx.optionsProvider()
                             def cfg = params.ts_cfg ?: ""
                             if (params.with_tce) {
                                 opts.add('--tce')
                             }
+
+                            env.TE_META_FILE = teMeta.meta_data_fpath()
+
                             if (ctx.TS_LOG_LISTENER_NAME) {
                                 opts.add('--logger-listener=' +
                                          ctx.TS_LOG_LISTENER_NAME)
                                 opts.add('--logger-meta-file=' +
-                                         teMeta.meta_data_fpath())
+                                         env.TE_META_FILE)
                             }
                             if (params.ts_opts) {
                                 opts.add(params.ts_opts)
@@ -370,11 +342,7 @@ def call(Closure body) {
                             }
 
                             teRun.run(ctx, cfg, opts)
-                            ctx.metas.RUN_OK = "true"
-                            ctx.metas.RUN_STATUS = "DONE"
 
-                            ctx.metas.FINISH_TIMESTAMP =
-                                                teMeta.meta_timestamp_make()
                             if (ctx.containsKey('postRunHook')) {
                                 ctx.postRunHook()
                             }
@@ -415,12 +383,6 @@ def call(Closure body) {
 
                     ctx.revdata_archive()
 
-                    if (ctx.metas.FINISH_TIMESTAMP == null) {
-                        ctx.metas.FINISH_TIMESTAMP =
-                                        teMeta.meta_timestamp_make()
-                    }
-
-                    teMeta.meta_generate(ctx)
                     archiveArtifacts artifacts: teMeta.meta_data_fname()
 
                     try {

@@ -97,7 +97,7 @@ def get_rev(ctx, component) {
 // repository URL and revision in ctx.all_revs (so that it
 // will be stored in artifacts), and also sets [component]_SRC
 // variable in context (pointing to the directory with obtained
-// sources) and *_REV variable in metas.
+// sources).
 //
 // Args:
 //   ctx: pipeline context
@@ -160,13 +160,6 @@ def generic_checkout(ctx, String component, String url = null,
     if (scm_vars.GIT_BRANCH && scm_vars.GIT_BRANCH != 'detached') {
         ctx.revdata_set(component, "${var_prefix}BRANCH",
                         scm_vars.GIT_BRANCH - ~/^\/?origin\//)
-    }
-
-    ctx.metas["${var_prefix}GIT_URL"] = repo
-    ctx.metas["${var_prefix}REV"] = rev_got
-
-    if ((branch = ctx.revdata_get(component, "${var_prefix}BRANCH"))) {
-        ctx.metas["${var_prefix}BRANCH"] = branch
     }
 
     return scm_vars
@@ -568,7 +561,7 @@ def define_logs_paths(ctx) {
 
     ctx.LOGS_PATH = ctx.LOGS_PATH ?:
                     ctx.TS_LOGS_SUBPATH +
-                    ctx.metas.CAMPAIGN_DATE.replaceAll(/-/, '/') +
+                    ctx.env.TE_META_CAMPAIGN_DATE.replaceAll(/-/, '/') +
                     '/' + params.ts_cfg + '-' + env.BUILD_NUMBER
 
     if (ctx.TS_LOGS_URL_PREFIX) {
