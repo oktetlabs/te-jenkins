@@ -162,6 +162,30 @@ def generic_checkout(ctx, String component, String url = null,
                         scm_vars.GIT_BRANCH - ~/^\/?origin\//)
     }
 
+    if ((branch = ctx.revdata_get(component, "${var_prefix}BRANCH"))) {
+        // Save branch name in environment - it can be used when generating
+        // metadata in TE.
+        //
+        // Note: I add JENKINS_ prefix here because Jenkins environment
+        // can already contain "${var_prefix}BRANCH" but in lower case
+        // because there is a pipeline parameter with such name. And
+        // Jenkins will process assignment in a case insensitive way,
+        // i.e. if you have tsrigs_branch=X in environment and try
+        // to do env["TSRISGS_BRANCH"]=Y, you will have
+        // tsrigs_branch=Y in environment. This is not desirable
+        // here.
+        def env_name = "JENKINS_"
+
+        if (component == "ts") {
+            env_name += teCommon.str2id(ctx.ts_name) + "_"
+        } else {
+            env_name += var_prefix
+        }
+        env_name += "BRANCH"
+
+        ctx.env[env_name] = branch
+    }
+
     return scm_vars
 }
 
