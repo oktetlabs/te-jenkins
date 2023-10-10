@@ -331,8 +331,6 @@ def call(Closure body) {
                             if (ctx.TS_LOG_LISTENER_NAME) {
                                 opts.add('--logger-listener=' +
                                          ctx.TS_LOG_LISTENER_NAME)
-                                opts.add('--logger-meta-file=' +
-                                         env.TE_META_FILE)
                             }
                             if (params.ts_opts) {
                                 opts.add(params.ts_opts)
