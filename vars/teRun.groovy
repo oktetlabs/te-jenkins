@@ -451,15 +451,10 @@ def git_checkout(String url, String revision, Boolean do_poll = true) {
     def scm_params = [
         $class: 'GitSCM',
         userRemoteConfigs: [[url: url]],
-        extensions: [
-            [
-                $class: 'CloneOption',
-                depth: 100,
-                noTags: false,
-                reference: '',
-                shallow: true
-            ]
-        ],
+        // Previously CloneOption was used here to configure
+        // shallow copy with depth = 100. Unfortunately it
+        // caused problems with some repositories (DPDK, OVS) where
+        // git hanged for a long time.
     ]
 
     if (revision) {
