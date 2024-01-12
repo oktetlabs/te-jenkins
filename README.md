@@ -324,13 +324,13 @@ The following variables are used for Bublik application currently:
    files in your test suite. In update job set `downstream_jobs`
    string parameter to the name of your documentation job so that
    documentation is rebuilt automatically after successful update.
-   In documentation job set `update_job` parameter to the name
+   In documentation job set `get_revs_from` parameter to the name
    of your update job so that it gets repositories and revisions
    from there.
 5. Add pipeline(s) based on "run" file in your test suite. This
    pipeline(s) will be triggered by pipeline for scheduled
    testing runs according to a schedule defined there.
-   Set `update_job` parameter to the name of your update job.
+   Set `get_revs_from` parameter to the name of your update job.
 6. Add pipeline for scheduled testing runs.
 
 You may add multiple run jobs, for example, one for every configuration,

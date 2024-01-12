@@ -145,9 +145,7 @@
 def call(Closure body) {
     def ctx = teCommon.create_pipeline_ctx(env, params)
     def emailRecipientProviders = []
-    // update_job is the previous name, mentioned here to
-    // avoid breaking existing pipelines.
-    def get_revs_from = params.get_revs_from ?: params.update_job
+    def get_revs_from = params.get_revs_from
     def post_conds = []
 
     // DELEGATE_FIRST means that the delegate is used firstly

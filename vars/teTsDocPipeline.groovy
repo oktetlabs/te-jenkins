@@ -76,9 +76,7 @@ def call(Closure body) {
     String doc_status = 'OK'
     Boolean build_status = true
 
-    // update_job is the previous name, mentioned here to
-    // avoid breaking existing pipelines.
-    def get_revs_from = params.get_revs_from ?: params.update_job
+    def get_revs_from = params.get_revs_from
 
     ctx.send_on_status = ['fixed', 'unsuccessful']
 
