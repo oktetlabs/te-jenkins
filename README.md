@@ -353,3 +353,10 @@ variable. Its value can contain `__USER__` string which is replaced
 by current user name when sending email.
 
 See also comments in `vars/teEmail.groovy`.
+
+### Restarting test hosts
+
+Parameter `restart_cfg` of `teTsPipeline` allows to request restarting
+test hosts before running testing. `restartHook` should be implemented
+which does actual restart. It can be specified in test suite or in
+ts-rigs.

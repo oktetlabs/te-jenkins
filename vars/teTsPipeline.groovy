@@ -53,6 +53,10 @@
 //                  that revisions were saved in an artifact in `all.rev`
 //                  file using teRevData API.
 //   ts_cfg: Tested configuration name (sticky default)
+//   restart_cfg: if true, test hosts should be restarted before
+//                running tests. Note: this parameter is not handled
+//                here because restarting is site-specific. It
+//                can be handled in test suite or ts-rigs.
 //   lock: Lock to acquire and hold while running. Empty by default
 //         which means that ts_cfg should be used as a lock name.
 //         (opaque string, sticky default)
@@ -114,6 +118,8 @@
 //               before starting run.sh. Useful for preparing your specific
 //               environment and tools before running test suite. Optional
 //               parameter.
+//   restartHook: Closure is called when restart_cfg parameter is set to
+//                true.
 //   postRunHook: Closure is called after run.sh and before saving artifacts.
 //                Useful for archiving your specific artifacts, cleanup.
 //                Optional parameter.
@@ -197,6 +203,10 @@ def call(Closure body) {
                             string(name: 'ts_cfg',
                                    defaultValue: params.ts_cfg,
                                    description: 'Name of configuration to be passed as --cfg option value (sticky default)'),
+
+                            booleanParam(name: 'restart_cfg',
+                                         defaultValue: false,
+                                         description: 'If true, test hosts should be restarted'),
 
                             string(name: 'lock',
                                    defaultValue: params.lock,
@@ -315,6 +325,14 @@ def call(Closure body) {
                             teRun.define_logs_paths(ctx)
 
                             teEmail.email_stage(ctx, 'Run')
+
+                            if (params.restart_cfg) {
+                                if (ctx.containsKey('restartHook')) {
+                                    ctx.restartHook(ctx)
+                                } else {
+                                    error("restartHook() is not specified")
+                                }
+                            }
 
                             if (ctx.containsKey('preRunHook')) {
                                 ctx.preRunHook()
