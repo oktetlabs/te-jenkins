@@ -64,6 +64,12 @@ def run_cmd_on_files(params, patterns, cmd) {
 
 pipeline {
 
+    options {
+        buildDiscarder(logRotator(daysToKeepStr:'15', numToKeepStr:'30'))
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
     parameters {
         string(name: 'label',
                description: 'Label of a Jenkins node where logs are stored (sticky default)',
