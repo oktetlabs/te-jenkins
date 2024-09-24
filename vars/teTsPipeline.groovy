@@ -351,8 +351,8 @@ def call(Closure body) {
                             if (params.ts_opts) {
                                 opts.add(params.ts_opts)
                             }
-                            if (env.HTML_LOGS) {
-                                opts.add("--trc-html-logs=${env.HTML_LOGS}html")
+                            if (ctx.HTML_LOGS) {
+                                opts.add("--trc-html-logs=${ctx.HTML_LOGS}html")
                             }
 
                             teRun.run(ctx, cfg, opts)
@@ -411,10 +411,10 @@ def call(Closure body) {
                         ctx.LOGS_PATH) {
                         teRun.publish_logs(ctx)
 
-                        if (env.HTML_LOGS) {
+                        if (ctx.HTML_LOGS) {
                             teEmail.email_newline(ctx)
                             teEmail.email_message(ctx, "Logs archive:")
-                            teEmail.email_message(ctx, "${env.HTML_LOGS}")
+                            teEmail.email_message(ctx, "${ctx.HTML_LOGS}")
                         }
                     }
 
