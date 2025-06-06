@@ -321,6 +321,7 @@ def run(ctx, String cfg, options) {
         Boolean rm_te_logs = false
         String te_logs
         String cmd
+        String ts_run_pid
 
         env.TE_BUILD = "${env.WORKSPACE}/build"
 
