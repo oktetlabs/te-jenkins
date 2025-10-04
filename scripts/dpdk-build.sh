@@ -19,9 +19,6 @@ function meson_build() {
     local build="$1" ; shift
     local meson_args=()
 
-    # Disable kernel modules build since it requires extra rights to install
-    meson_args+=(-Denable_kmods=false)
-
     test -z "${PREFIX}" || meson_args+=(--prefix "${PREFIX}" --libdir lib)
 
     meson "${meson_args[@]}" "${build}" || return 1
