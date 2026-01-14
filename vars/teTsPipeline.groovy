@@ -355,6 +355,8 @@ def call(Closure body) {
                                 opts.add("--trc-html-logs=${ctx.HTML_LOGS}html")
                             }
 
+                            opts.add("--meta=CI_URL:${env.BUILD_URL}")
+
                             teRun.run(ctx, cfg, opts)
 
                             if (ctx.containsKey('postRunHook')) {
