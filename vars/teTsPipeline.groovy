@@ -357,6 +357,15 @@ def call(Closure body) {
 
                             opts.add("--meta=CI_URL:${env.BUILD_URL}")
 
+                            params.sort().each {
+                                name, value ->
+                                if (value != null && value != "") {
+                                    escaped = "${value}".replace('\\', '\\\\')
+                                    escaped = escaped.replace('"', '\\"')
+                                    opts.add("--meta=CI_PARAM_${name}:\"${escaped}\"")
+                                }
+                            }
+
                             teRun.run(ctx, cfg, opts)
 
                             if (ctx.containsKey('postRunHook')) {
