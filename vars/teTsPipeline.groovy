@@ -360,7 +360,7 @@ def call(Closure body) {
                             params.sort().each {
                                 name, value ->
                                 if (value != null && value != "") {
-                                    escaped = "${value}".replace('\\', '\\\\')
+                                    def escaped = "${value}".replace('\\', '\\\\')
                                     escaped = escaped.replace('"', '\\"')
                                     opts.add("--meta=CI_PARAM_${name}:\"${escaped}\"")
                                 }
