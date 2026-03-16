@@ -93,6 +93,53 @@ def get_rev(ctx, component) {
     return rev
 }
 
+// Determine credentials ID for a given component checkout,
+// taking into account parameters and environment.
+//
+// Args:
+//   ctx: pipeline context
+//   component: component name
+//
+// Return:
+//   Credentials ID or null if it is not specified.
+def get_credentials_id(ctx, component) {
+    def credentials_id
+    def var_name
+    def source
+
+    // For example, if component = 'te', we try the
+    // following sources (stopping once we found
+    // defined value):
+    //
+    // params.te_git_credentials_id
+    // TE_GIT_CREDENTIALS_ID in context
+    // TE_GIT_CREDENTIALS_ID in environment
+    // GIT_CREDENTIALS_ID in context
+    // GIT_CREDENTIALS_ID in environment
+
+    var_name = "${component}_GIT_CREDENTIALS_ID".toUpperCase()
+
+    if ((credentials_id =
+                params["${component}_git_credentials_id"] ?: '')) {
+        source = "pipeline parameter ${component}_git_credentials_id"
+    } else if ((credentials_id = ctx[var_name])) {
+        source = "context variable ${var_name}"
+    } else if ((credentials_id = env[var_name] ?: '')) {
+        source = "environment variable ${var_name}"
+    } else if ((credentials_id = ctx["GIT_CREDENTIALS_ID"])) {
+        source = "context variable GIT_CREDENTIALS_ID"
+    } else if ((credentials_id = env["GIT_CREDENTIALS_ID"] ?: '')) {
+        source = "environment variable GIT_CREDENTIALS_ID"
+    } else {
+        return null
+    }
+
+    println "Credentials ID for '${component}' is obtained " +
+            "from ${source}: ${credentials_id}"
+
+    return credentials_id
+}
+
 // Generic function for checking out a repository. It saves
 // repository URL and revision in ctx.all_revs (so that it
 // will be stored in artifacts), and also sets [component]_SRC
@@ -110,14 +157,18 @@ def get_rev(ctx, component) {
 //           the value of component argument)
 //   do_poll: if true, this checkout should be taken into account by
 //            pollSCM() trigger
+//   credentials_id: Jenkins credentials ID for Git checkout
+//                   (if null, get_credentials_id() determines it)
 //
 // Return:
 //   List of checkout details as per GitSCM module.
 def generic_checkout(ctx, String component, String url = null,
                      String revision = null, String target = null,
-                     Boolean do_poll = true) {
+                     Boolean do_poll = true,
+                     String credentials_id = null) {
 
     def scm_vars
+    String credentials = credentials_id ?: get_credentials_id(ctx, component)
     String rev = revision ?: get_rev(ctx, component)
     String rev_got
     String repo = url ?: get_url(ctx, component)
@@ -132,7 +183,7 @@ def generic_checkout(ctx, String component, String url = null,
     var_prefix = "${component}_".toUpperCase()
 
     dir (target ?: component) {
-        scm_vars = git_checkout(repo, rev, do_poll)
+        scm_vars = git_checkout(repo, rev, do_poll, credentials)
 
         ctx["${var_prefix}SRC"] = pwd()
 
@@ -200,7 +251,7 @@ def generic_checkout(Map args) {
 
     return generic_checkout(args.ctx, args.component, args.url,
                             args.revision, args.target,
-                            args.do_poll)
+                            args.do_poll, args.credentials_id)
 }
 
 // Checkout TE
@@ -444,14 +495,22 @@ def statistics() {
 //   revision: branch, tag or SHA-1
 //   do_poll: if true, this checkout should be taken into account by
 //            pollSCM() trigger
+//   credentials_id: Jenkins credentials ID for Git checkout
 //
 // Return:
 //   List of checkout details as per GitSCM module.
-def git_checkout(String url, String revision, Boolean do_poll = true) {
+def git_checkout(String url, String revision, Boolean do_poll = true,
+                 String credentials_id = null) {
     def result = null
+    def remote_cfg = [url: url]
+
+    if (credentials_id) {
+        remote_cfg.credentialsId = credentials_id
+    }
+
     def scm_params = [
         $class: 'GitSCM',
-        userRemoteConfigs: [[url: url]],
+        userRemoteConfigs: [remote_cfg],
         // Previously CloneOption was used here to configure
         // shallow copy with depth = 100. Unfortunately it
         // caused problems with some repositories (DPDK, OVS) where

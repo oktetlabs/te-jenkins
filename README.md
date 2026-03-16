@@ -160,8 +160,20 @@ or in Jenkins files:
 - `TSCONF_GIT_URL`
 - `TS_GIT_URL`
 
+Optional Jenkins Git credentials IDs for these repositories may be
+specified in pipeline context or environment variables:
+
+- `TE_GIT_CREDENTIALS_ID`
+- `TSRIGS_GIT_CREDENTIALS_ID`
+- `TSCONF_GIT_CREDENTIALS_ID`
+- `TS_GIT_CREDENTIALS_ID`
+- `GIT_CREDENTIALS_ID` (fallback for all repositories)
+
 Job parameters have higher priority than these variables and can be
-used for testing different repositories.
+used for testing different repositories. If `*_GIT_CREDENTIALS_ID`
+is not set for a specific repository, `GIT_CREDENTIALS_ID` is used
+as fallback (if it is set). If neither specific nor common credentials
+ID is set, checkout is attempted without credentials.
 
 If ts-rigs is present, pipeline templates will check whether
 `jenkins/common.groovy` is available there. If it is, they
@@ -186,6 +198,20 @@ this library:
 
 ```
 TSRIGS_GIT_URL = https://__USER__@git.oktetlabs.ru/git/oktetlabs/ts-rigs.git
+```
+
+If repository checkout should use credentials stored in Jenkins, set
+the corresponding credentials ID, for example:
+
+```
+TSRIGS_GIT_URL = ssh://git@git.oktetlabs.ru/git/oktetlabs/ts-rigs.git
+TSRIGS_GIT_CREDENTIALS_ID = gitlab-jenkins-bot
+```
+
+To reuse one credentials ID for all checkouts:
+
+```
+GIT_CREDENTIALS_ID = gitlab-jenkins-bot
 ```
 
 Specific revisions or branches may be set via pipeline parameters, or by

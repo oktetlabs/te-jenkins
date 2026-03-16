@@ -19,6 +19,9 @@
 // Default job parameters
 // Note: tsconf_* parameters are present only if tsconf template parameter
 // was set to true.
+// Optional Jenkins Git credentials IDs for repository checkouts may be
+// specified via [TE|TS|TSCONF|TSRIGS]_GIT_CREDENTIALS_ID environment or
+// pipeline context variables (or via common GIT_CREDENTIALS_ID as fallback).
 //
 //   te_rev: TE revision, can be tag, branch or SHA-1
 //   te_repo: TE repository (can also be set in TE_GIT_URL environment
