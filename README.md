@@ -308,7 +308,9 @@ a host where testing logs are permanently stored:
   permanently stored. This string will be passed to `publish-logs`
   job as its `logs_node` parameter. If this variable is not set or
   empty, logs will not be published.
-- `TS_LOGS_SUBPATH` - path relative to `$HOME/private_html/` on the host
+- `TE_LOGS_ROOT` - root directory on the logs storage host where logs should
+  be saved. If not set, `publish-logs` uses `TE_LOGS_ROOT`.
+- `TS_LOGS_SUBPATH` - path relative to `TE_LOGS_ROOT` on the host
   where logs are stored. This is the base directory where logs should
   be saved. Subdirectories named after current date, tested configuration
   and Jenkins build number will be appended to this path to determine
@@ -318,7 +320,7 @@ a host where testing logs are permanently stored:
   If you do not like the default path construction, you can set directly
   `LOGS_PATH` variable in your pipeline (in closure body or `preStartHook`
   or `preRunHook`). Then it will be used as a path relative to
-  `$HOME/private_html/`. Then you may not need to define `TS_LOGS_SUBPATH`.
+  `TE_LOGS_ROOT`. Then you may not need to define `TS_LOGS_SUBPATH`.
   If neither `LOGS_PATH` nor `TS_LOGS_SUBPATH` is specified, logs
   will not be published or made available via Bublik.
 

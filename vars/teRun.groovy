@@ -681,7 +681,8 @@ def check_label(label) {
 // export them to Bublik web application).
 //
 // LOGS_PATH variable should be set to the location
-// where copy of the logs should be saved.
+// where copy of the logs should be saved, relative to
+// TE_LOGS_ROOT (or $HOME/private_html if TE_LOGS_ROOT is not set).
 // HTML_LOGS variable should be set to URL of the logs
 // to make export to Bublik possible.
 // define_logs_paths() can be used to set these variables.
@@ -703,6 +704,9 @@ def publish_logs(ctx) {
                 [ $class: 'StringParameterValue',
                   name: 'publish_to',
                   value: ctx.LOGS_PATH ],
+                [ $class: 'StringParameterValue',
+                  name: 'logs_root',
+                  value: ctx.TE_LOGS_ROOT ?: '' ],
                 [ $class: 'StringParameterValue',
                   name: 'logs_node',
                   value: ctx.PUBLISH_LOGS_NODE ],

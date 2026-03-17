@@ -19,6 +19,8 @@ pipeline {
                description: 'Job to copy artifacts from')
         string(name: 'publish_to', defaultValue: '',
                description: 'Path to publish logs to')
+        string(name: 'logs_root', defaultValue: '',
+               description: 'Root directory on logs storage host; defaults to $HOME/private_html')
         string(name: 'logs_node', defaultValue: '',
                description: 'Label of the node where logs should be stored')
         string(name: 'log_files',
@@ -67,8 +69,10 @@ pipeline {
             when { expression { params.art_srv_id == '' } }
             steps {
                 script {
-                    def logs_path = env.HOME + '/private_html/' +
-                                    params.publish_to
+                    def logs_root = (params.logs_root ?:
+                                     env.HOME + '/private_html')
+                                    .replaceFirst('/+$', '')
+                    def logs_path = logs_root + '/' + params.publish_to
 
                     // Make sure that target directory exists
                     sh "mkdir -p ${logs_path}"
